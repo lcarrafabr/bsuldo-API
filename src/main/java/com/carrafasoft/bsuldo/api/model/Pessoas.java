@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -90,11 +91,23 @@ public class Pessoas {
 			return false;
 		return true;
 	}
-	
+
 	@PrePersist
 	public void aoCadastrarPessoa() {
-		
+
 		dataCadastro = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+		toUpperCase();
+	}
+
+	@PreUpdate
+	public void aoAtualizar() {
+
+		toUpperCase();
+	}
+
+	private void toUpperCase() {
+
+		nomePessoa = nomePessoa.toUpperCase();
 	}
 
 }
