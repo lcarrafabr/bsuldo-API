@@ -62,7 +62,7 @@ public class MetodoDeCobrancaResource {
 	}
 	
 	@PutMapping("/{codigo}")
-	public ResponseEntity<MetodoDeCobranca> atualizarMetodoCobranca(@PathVariable Long codigo,@Valid @RequestBody MetodoDeCobranca metodoCob) {
+	public ResponseEntity<MetodoDeCobranca> atualizarMetodoCobranca(@PathVariable Long codigo, @Valid @RequestBody MetodoDeCobranca metodoCob) {
 		
 		MetodoDeCobranca metodoSalvo = metodoCobService.atualizarMetodoCob(codigo, metodoCob);
 		
