@@ -7,13 +7,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
@@ -71,6 +74,30 @@ public class LancamentoResource {
 		Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento);
 		
 		return ResponseEntity.ok(lancamentoSalvo);
+	}
+	
+	
+	@DeleteMapping("/{codigo}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void removerLancamento(@PathVariable Long codigo) {
+		
+		lancamentoRepository.deleteById(codigo);
+	}
+	
+	@PutMapping("/{codigo}/cancelar-lancamento")
+	public ResponseEntity<Lancamentos> cancelarLancamento(@PathVariable Long codigo, @RequestBody Boolean cancelar) {
+		
+		Lancamentos lancamentoCancelado = lancamentoService.cancelarLancamento(codigo, cancelar);
+		
+		return ResponseEntity.ok(lancamentoCancelado);
+	}
+	
+	//*****************************************************************************************************************************************************************************
+	
+	@GetMapping("/lancamentos-vencidos")
+	public List<Lancamentos> listarLancamentosVencidos() {
+		
+		return lancamentoRepository.buscaLancamentosVencidos();
 	}
 
 }

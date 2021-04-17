@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
@@ -28,6 +29,16 @@ public class LancamentoService {
 
 	@Autowired
 	private ApplicationEventPublisher publisher;
+	
+	
+	@Scheduled(cron = "0 0 0 * * *")
+	public void atualizarStatusLancamentoVencidos() {
+		
+		System.out.println("Atualizado a situação de todos os lancamentos vencidos");
+		
+		lancamentoRepository.atualizaLancamentosVencidos();
+		
+	}
 
 	public ResponseEntity<?> cadastrarLancamentoSemParcelamento(Lancamentos lancamento, HttpServletResponse response) {
 
@@ -128,6 +139,26 @@ public class LancamentoService {
 		Lancamentos lancamentoSalvo = buscaPorId(codigo);
 		System.out.println(lancamentoSalvo.getLancamentoId());
 		BeanUtils.copyProperties(lancamento, lancamentoSalvo, "lancamentoId");
+		
+		return lancamentoRepository.save(lancamentoSalvo);
+	}
+	
+	public Lancamentos cancelarLancamento(Long codigo, Boolean cancelar) {
+		
+		Lancamentos lancamentoSalvo = buscaPorId(codigo);
+		
+		if(cancelar == true) {
+			
+			lancamentoSalvo.setSituacao(SituacaoEnum.CANCELADO);
+		
+		} else if (cancelar == false && lancamentoSalvo.getDataPagamento() == null) {
+			
+			lancamentoSalvo.setSituacao(SituacaoEnum.PENDENTE);
+		
+		} else {
+			
+			lancamentoSalvo.setSituacao(SituacaoEnum.PAGO);
+		}
 		
 		return lancamentoRepository.save(lancamentoSalvo);
 	}
