@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
+import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSemana;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.service.LancamentoService;
 
@@ -98,6 +99,12 @@ public class LancamentoResource {
 	public List<Lancamentos> listarLancamentosVencidos() {
 		
 		return lancamentoRepository.buscaLancamentosVencidos();
+	}
+	
+	@GetMapping("/totais-por-ano")
+	public List<?> lancamentosNoAno() {
+		
+		return lancamentoRepository.listarTotaisPorAno();
 	}
 
 }
