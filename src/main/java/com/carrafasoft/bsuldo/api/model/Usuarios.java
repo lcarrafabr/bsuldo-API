@@ -1,11 +1,16 @@
 package com.carrafasoft.bsuldo.api.model;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -36,6 +41,11 @@ public class Usuarios {
 	@ManyToOne
 	@JoinColumn(name = "pessoa_id")
 	private Pessoas pessoa;
+
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "usuario_permissao", joinColumns = @JoinColumn(name = "usuario_id"), 
+	inverseJoinColumns = @JoinColumn(name = "permissao_id"))
+	private List<Permissao> permissoes;
 
 	public Long getUsuarioId() {
 		return usuarioId;
@@ -75,6 +85,14 @@ public class Usuarios {
 
 	public void setPessoa(Pessoas pessoa) {
 		this.pessoa = pessoa;
+	}
+
+	public List<Permissao> getPermissoes() {
+		return permissoes;
+	}
+
+	public void setPermissoes(List<Permissao> permissoes) {
+		this.permissoes = permissoes;
 	}
 
 	@Override
