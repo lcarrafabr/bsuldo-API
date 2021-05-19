@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +41,7 @@ public class PessoaResource {
 	
 	
 	@GetMapping
+	@PreAuthorize("hasAuthority('ROLE_PESQUISAR_PESSOA')")
 	public List<Pessoas> listarPessoas() {
 		
 		return pessoaRepository.findAll();
@@ -56,6 +58,7 @@ public class PessoaResource {
 	}
 	
 	@GetMapping("/{codigo}")
+	@PreAuthorize("hasAuthority('ROLE_PESQUISAR_PESSOA')")
 	public ResponseEntity<Pessoas> buscaPorId(@PathVariable Long codigo) {
 		
 		Optional<Pessoas> pessoaSalva = pessoaRepository.findById(codigo);
@@ -64,6 +67,7 @@ public class PessoaResource {
 	}
 	
 	@PutMapping("/{codigo}")
+	@PreAuthorize("hasAuthority('ROLE_EDITAR_PESSOA')")
 	public ResponseEntity<Pessoas> atualizarPessoa(@PathVariable Long codigo, @Valid @RequestBody Pessoas pessoa) {
 		
 		Pessoas pessoaSalva = pessoaService.atualizarPessoa(codigo, pessoa);
@@ -72,6 +76,7 @@ public class PessoaResource {
 	}
 	
 	@DeleteMapping("/{codigo}")
+	@PreAuthorize("hasAuthority('ROLE_REMOVER_PESSOA')")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void removerPessoa(@PathVariable Long codigo) {
 		
