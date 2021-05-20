@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.carrafasoft.bsuldo.api.model.Usuarios;
 import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
+import com.carrafasoft.bsuldo.api.security.util.UsuarioSistema;
 
 @Service
 public class AppUserDetailsService implements UserDetailsService{
@@ -29,7 +30,8 @@ public class AppUserDetailsService implements UserDetailsService{
 		Optional<Usuarios> usuarioOptional = usuarioRepository.findByNomeUsuario(username);
 		Usuarios usuario = usuarioOptional.orElseThrow(() -> new UsernameNotFoundException("Usuario e/ou senha inválidos."));
 		
-		return new User(username, usuario.getSenha(), getPermissoes(usuario));
+		//return new User(username, usuario.getSenha(), getPermissoes(usuario));
+		return new UsuarioSistema(usuario, getPermissoes(usuario));
 	}
 
 	private Collection<? extends GrantedAuthority> getPermissoes(Usuarios usuario) {
