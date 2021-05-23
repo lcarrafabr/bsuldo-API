@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -26,6 +27,36 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "where data_vencimento < CURRENT_DATE "
 					+ "and situacao = 'PENDENTE' ")
 	public List<Lancamentos> buscaLancamentosVencidos();
+	
+	@Query(nativeQuery = true,
+			value = "select * "
+					+ "from lancamentos "
+					+ "where descricao like %:descricao% ")
+	public List<Lancamentos> buscaPorDescricao(String descricao);
+	
+	@Query(nativeQuery = true,
+			value = "select * "
+					+ "from lancamentos "
+					+ "where data_vencimento between :vencimentoInicio and :vencimentoFim ")
+	public List<Lancamentos> buscaPorDataVencimentoDataIniDataFim(LocalDate vencimentoInicio, LocalDate vencimentoFim);
+	
+	@Query(nativeQuery = true,
+			value = "select * "
+					+ "from lancamentos "
+					+ "where data_vencimento <= :dataVencimento ")
+	public List<Lancamentos> buscaPorDataVencimentoMenorQueDataInformada(LocalDate dataVencimento);
+	
+	@Query(nativeQuery = true,
+			value = "select * "
+					+ "from lancamentos "
+					+ "where situacao = :situacao ")
+	public List<Lancamentos> buscaBySituacao(String situacao);
+	
+	@Query(nativeQuery = true,
+			value = "select * "
+					+ "from lancamentos "
+					+ "where chave_pesquisa = :chavePesquisa ")
+	public List<Lancamentos> buscaByChavePesquisa(String chavePesquisa);
 	
 	@Transactional
 	@Modifying

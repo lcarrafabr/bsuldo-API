@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +24,7 @@ import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSemana;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.service.LancamentoService;
+import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
 
 @RestController
 @RequestMapping("/lancamentos")
@@ -106,5 +108,38 @@ public class LancamentoResource {
 		
 		return lancamentoRepository.listarTotaisPorAno();
 	}
+	
+	@GetMapping("/pesquisa")
+	public List<Lancamentos> buscaPorDescricao(@RequestParam("descricao") String descricao) {
+		
+		return lancamentoRepository.buscaPorDescricao(descricao);
+	}
+	
+	@GetMapping("pesquisa-por-data_ini_fim-vencimento")
+	public List<Lancamentos> buscaPorDataVencimentoIniFim(@RequestParam("vencimentoInicio") String vencimentoInicio, @RequestParam("vencimentoFim")  String vencimentoFim) {
+		
+		return lancamentoRepository.buscaPorDataVencimentoDataIniDataFim(
+				FuncoesUtils.converterStringParaLocalDate(vencimentoInicio), 
+				FuncoesUtils.converterStringParaLocalDate(vencimentoFim)
+				);
+	}
+	
+	@GetMapping("pesquisa-vencimento-ate")
+	public List<Lancamentos> buscaPorDataVencimentoMenorQueDataInformada(@RequestParam("dataVencimento") String dataVencimento) {
+		
+		return lancamentoRepository.buscaPorDataVencimentoMenorQueDataInformada(
+				FuncoesUtils.converterStringParaLocalDate(dataVencimento));
+	}
+	
+	@GetMapping("/busca-por-situacao")
+	public List<Lancamentos> buscaBysituacao(@RequestParam("situacao") String situacao) {
+		
+		return lancamentoRepository.buscaBySituacao(situacao);
+	}
 
+	@GetMapping("/busca-by-chave-pesquisa")
+	public List<Lancamentos> buscaByChavePesquisa(@RequestParam("chavePesquisa") String chavePesquisa) {
+		
+		return lancamentoRepository.buscaByChavePesquisa(chavePesquisa);
+	}
 }
