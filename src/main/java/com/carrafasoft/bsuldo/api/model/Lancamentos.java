@@ -208,7 +208,12 @@ public class Lancamentos {
 	public void aoCadastrar() {
 
 		toUpperCase();
-		situacao = SituacaoEnum.PENDENTE;
+		if(SituacaoEnum.PAGO == situacao) {
+			situacao = SituacaoEnum.PAGO;
+		} else {
+			situacao = SituacaoEnum.PENDENTE;
+		}
+		
 	}
 
 	@PreUpdate

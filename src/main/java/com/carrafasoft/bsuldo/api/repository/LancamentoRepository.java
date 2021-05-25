@@ -17,6 +17,10 @@ import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSeman
 public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 	
 	@Query(nativeQuery = true,
+			value = "select * from lancamentos order by lancamento_id desc ")
+	public List<Lancamentos> findByAllDesc();
+	
+	@Query(nativeQuery = true,
 			value = "select * from lancamentos where chave_pesquisa = :chave ")
 	public List<Lancamentos> buscarPorchave(String chave);
 	

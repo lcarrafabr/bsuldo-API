@@ -40,7 +40,7 @@ public class LancamentoResource {
 	@GetMapping
 	public List<Lancamentos> listarTodos() {
 		
-		return lancamentoRepository.findAll();
+		return lancamentoRepository.findByAllDesc();
 	}
 	
 	
