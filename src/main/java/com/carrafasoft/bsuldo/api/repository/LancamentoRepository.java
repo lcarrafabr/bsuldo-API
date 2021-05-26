@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -70,6 +71,13 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "where data_vencimento < CURRENT_DATE "
 					+ "and situacao = 'PENDENTE' ")
 	public void atualizaLancamentosVencidos();
+	
+	@Query(nativeQuery = true,
+			value = "select sum(valor) as valor_a_pagar "
+					+ "from lancamentos "
+					+ "where data_vencimento between :dataIni and :dataFim "
+					+ "and situacao = 'PENDENTE' ")
+	public BigDecimal valorApagarNoMes(LocalDate dataIni, LocalDate dataFim);
 	
 	
 	@Query(nativeQuery = true,

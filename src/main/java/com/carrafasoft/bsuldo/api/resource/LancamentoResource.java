@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.resource;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -115,7 +116,7 @@ public class LancamentoResource {
 		return lancamentoRepository.buscaPorDescricao(descricao);
 	}
 	
-	@GetMapping("pesquisa-por-data_ini_fim-vencimento")
+	@GetMapping("/pesquisa-por-data_ini_fim-vencimento")
 	public List<Lancamentos> buscaPorDataVencimentoIniFim(@RequestParam("vencimentoInicio") String vencimentoInicio, @RequestParam("vencimentoFim")  String vencimentoFim) {
 		
 		return lancamentoRepository.buscaPorDataVencimentoDataIniDataFim(
@@ -124,7 +125,7 @@ public class LancamentoResource {
 				);
 	}
 	
-	@GetMapping("pesquisa-vencimento-ate")
+	@GetMapping("/pesquisa-vencimento-ate")
 	public List<Lancamentos> buscaPorDataVencimentoMenorQueDataInformada(@RequestParam("dataVencimento") String dataVencimento) {
 		
 		return lancamentoRepository.buscaPorDataVencimentoMenorQueDataInformada(
@@ -141,5 +142,14 @@ public class LancamentoResource {
 	public List<Lancamentos> buscaByChavePesquisa(@RequestParam("chavePesquisa") String chavePesquisa) {
 		
 		return lancamentoRepository.buscaByChavePesquisa(chavePesquisa);
+	}
+	
+	@GetMapping("/valor-a-pagar-no-mes")
+	public BigDecimal valorAPagarNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		return lancamentoRepository.valorApagarNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
 	}
 }

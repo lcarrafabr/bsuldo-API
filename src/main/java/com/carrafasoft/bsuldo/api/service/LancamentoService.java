@@ -131,13 +131,16 @@ public class LancamentoService {
 			
 			lancamento.setSituacao(SituacaoEnum.PAGO);
 		
+		} else if (existDataPagamento == null && lancamento.getSituacao() == SituacaoEnum.VENCIDO) {
+			
+			lancamento.setSituacao(SituacaoEnum.VENCIDO);
+			
 		} else {
 			
 			lancamento.setSituacao(SituacaoEnum.PENDENTE);
 		}
 		
 		Lancamentos lancamentoSalvo = buscaPorId(codigo);
-		System.out.println(lancamentoSalvo.getLancamentoId());
 		BeanUtils.copyProperties(lancamento, lancamentoSalvo, "lancamentoId");
 		
 		return lancamentoRepository.save(lancamentoSalvo);

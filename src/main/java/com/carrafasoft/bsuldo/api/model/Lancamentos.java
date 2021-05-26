@@ -210,6 +210,8 @@ public class Lancamentos {
 		toUpperCase();
 		if(SituacaoEnum.PAGO == situacao) {
 			situacao = SituacaoEnum.PAGO;
+		} else if(SituacaoEnum.VENCIDO == situacao) {
+			situacao = SituacaoEnum.VENCIDO;
 		} else {
 			situacao = SituacaoEnum.PENDENTE;
 		}
