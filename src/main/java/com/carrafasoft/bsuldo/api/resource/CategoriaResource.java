@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -81,6 +82,20 @@ public class CategoriaResource {
 	public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
 		
 		categoriaService.atualizarStatusAtivo(codigo, ativo);
+	}
+	
+	/*******************************************************************************************************************************************************/
+	
+	@GetMapping("/busca-por-nome-categoria")
+	public List<Categorias> buscaPorNomeCategoria(@RequestParam("nomeCategoria") String nomeCategoria) {
+		
+		return categoriaRepository.buscaPorNomeCategoria(nomeCategoria.trim());
+	}
+	
+	@GetMapping("/busca-categorias-ativas")
+	public List<Categorias> buscaCategoriasAtivas() {
+		
+		return categoriaRepository.buscaCategoriasAtivas();
 	}
 
 }
