@@ -152,4 +152,39 @@ public class LancamentoResource {
 				FuncoesUtils.converterStringParaLocalDate(dataFim)
 				);
 	}
+	
+	@GetMapping("/valor-pago-no-mes")
+	public BigDecimal valorPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		return lancamentoRepository.valorPagoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+	}
+	
+	@GetMapping("/valor-vencido-no-mes")
+	public BigDecimal valorVencidoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		return lancamentoRepository.valorVencidoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+	}
+	
+	@GetMapping("/total-devedor-por-ano")
+	public BigDecimal totalDevedorPorAno(@RequestParam("ano") String ano) {
+		
+		return lancamentoRepository.totalDevedorPorAno(Integer.valueOf(ano));
+	}
+	
+	@GetMapping("/perc-pago-no-mes")
+	public BigDecimal percentualPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		
+		return lancamentoRepository.percentualPagoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+	}
+	
 }

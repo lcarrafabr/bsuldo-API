@@ -76,8 +76,45 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 			value = "select sum(valor) as valor_a_pagar "
 					+ "from lancamentos "
 					+ "where data_vencimento between :dataIni and :dataFim "
-					+ "and situacao = 'PENDENTE' ")
+					+ "and situacao in ('PENDENTE', 'VENCIDO') ")
 	public BigDecimal valorApagarNoMes(LocalDate dataIni, LocalDate dataFim);
+	
+	@Query(nativeQuery = true,
+			value = "select sum(valor) as total_pago "
+					+ "from lancamentos "
+					+ "where data_vencimento between :dataIni and :dataFim "
+					+ "and situacao = 'PAGO' ")
+	public BigDecimal valorPagoNoMes(LocalDate dataIni, LocalDate dataFim);
+	
+	
+	@Query(nativeQuery = true,
+			value = "select sum(valor) as total_pago "
+					+ "from lancamentos "
+					+ "where data_vencimento between :dataIni and :dataFim "
+					+ "and situacao = 'VENCIDO' ")
+	public BigDecimal valorVencidoNoMes(LocalDate dataIni, LocalDate dataFim);
+	
+	@Query(nativeQuery = true,
+			value = "select sum(valor) as total_devedor "
+					+ "from lancamentos "
+					+ "where year(data_vencimento) = :ano ")
+	public BigDecimal totalDevedorPorAno(int ano);
+	
+	@Query(nativeQuery = true,
+			value = "select if(total_pago is not null, total_pago, 0) as perc_pago "
+					+ "from ( "
+					+ "select (total_devedor / ( "
+					+ "select sum(l2.valor) as total_pago "
+					+ "from lancamentos l2 "
+					+ "where situacao in ('PENDENTE', 'VENCIDO', 'PAGO') "
+					+ "and data_vencimento between :dataIni and :dataFim "
+					+ ")) * 100 as total_pago "
+					+ "from ( "
+					+ "select sum(l.valor) as total_devedor "
+					+ "from lancamentos l "
+					+ "where situacao in ('PAGO') "
+					+ "and data_vencimento between :dataIni and :dataFim ) as total_devedor ) as total ")
+	public BigDecimal percentualPagoNoMes(LocalDate dataIni, LocalDate dataFim);
 	
 	
 	@Query(nativeQuery = true,
