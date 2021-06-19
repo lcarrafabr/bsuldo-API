@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSemana;
+import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 
 @Repository
 public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
@@ -115,6 +116,32 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "where situacao in ('PAGO') "
 					+ "and data_vencimento between :dataIni and :dataFim ) as total_devedor ) as total ")
 	public BigDecimal percentualPagoNoMes(LocalDate dataIni, LocalDate dataFim);
+	
+	@Query(nativeQuery = true,
+			value = "select c.nome_categoria, sum(l.valor) totais "
+					+ "from lancamentos l "
+					+ "inner join categorias c on c.categoria_id = l.categoria_id "
+					+ "where l.data_vencimento between :dataIni and :dataFim "
+					+ "group by c.nome_categoria ")
+	public List<String> totalPorCategoriaMes(LocalDate dataIni, LocalDate dataFim);
+	
+	
+	@Query(nativeQuery = true,
+			value = "select m.nome_metodo_cobranca, sum(l.valor) as totais "
+					+ "from lancamentos l "
+					+ "inner join metodo_de_cobranca m on m.metodo_de_cobranca_id = l.metodo_de_cobranca_id "
+					+ "where l.data_vencimento between :dataIni and :dataFim "
+					+ "group by m.nome_metodo_cobranca ")
+	public List<String> totalPorMetodoCobrancaMes(LocalDate dataIni, LocalDate dataFim);
+	
+	@Query(nativeQuery = true,
+			value = "select day(data_vencimento) as dia, sum(valor) as total "
+					+ "from lancamentos "
+					+ "where data_vencimento between :dataIni and :dataFim "
+					+ "and situacao in ('PENDENTE', 'VENCIDO') "
+					+ "group by data_vencimento "
+					+ "order by dia ")
+	public List<String> totalLancamentosPorDiaMes(LocalDate dataIni, LocalDate dataFim);
 	
 	
 	@Query(nativeQuery = true,

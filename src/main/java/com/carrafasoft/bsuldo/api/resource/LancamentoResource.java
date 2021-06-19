@@ -1,6 +1,7 @@
 package com.carrafasoft.bsuldo.api.resource;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSemana;
+import com.carrafasoft.bsuldo.api.model.reports.LancamentosDiaMes;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
+import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.service.LancamentoService;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
@@ -185,6 +188,94 @@ public class LancamentoResource {
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
 				FuncoesUtils.converterStringParaLocalDate(dataFim)
 				);
+	}
+	
+	@GetMapping("/total-categoria-mes")
+	public List<TotalPorCategoriaMes> totalPorCategoriaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		List<String> lista = lancamentoRepository.totalPorCategoriaMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+		
+		
+		List<TotalPorCategoriaMes> totalCategoriaMes = new ArrayList<TotalPorCategoriaMes>();
+		
+		
+		for (int i = 0; i < lista.size(); i++) {
+			
+			TotalPorCategoriaMes totalMes = new TotalPorCategoriaMes();
+						
+			String textoJunto = lista.get(i);
+			
+			String[] textoSeparado = textoJunto.split(",");
+			
+			totalMes.setCategoria(textoSeparado[0]);
+			BigDecimal total = new BigDecimal(textoSeparado[1]);
+			totalMes.setTotais(total);
+			
+			totalCategoriaMes.add(totalMes);
+			
+		}
+		
+		return totalCategoriaMes;
+	}
+	
+	@GetMapping("/total-metodo-cob-mes")
+	public List<TotalMetodoCobrancaMes> totalPorMetodoCobrancaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		List<String> lista = lancamentoRepository.totalPorMetodoCobrancaMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+		
+		List<TotalMetodoCobrancaMes> totalMetodoCobrancaMes = new ArrayList<TotalMetodoCobrancaMes>();
+		
+		for (int i = 0; i < lista.size(); i++) {
+			
+			TotalMetodoCobrancaMes totalMetCob = new TotalMetodoCobrancaMes();
+			
+			String textoJunto = lista.get(i);
+			String [] textoSeparado = textoJunto.split(",");
+			
+			totalMetCob.setNomeMetodoCobranca(textoSeparado[0]);
+			BigDecimal total = new BigDecimal(textoSeparado[1]);
+			totalMetCob.setTotais(total);
+			
+			totalMetodoCobrancaMes.add(totalMetCob);
+			
+		}
+		
+		return totalMetodoCobrancaMes;
+	}
+	
+	
+	@GetMapping("/lancamentos-por-dia")
+	public List<LancamentosDiaMes> totalLancamentosPorDiaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		List<String> lista = lancamentoRepository.totalLancamentosPorDiaMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+		
+		List<LancamentosDiaMes> lancamentoPorDia = new ArrayList<LancamentosDiaMes>();
+		
+		for (int i = 0; i < lista.size(); i++) {
+			
+			LancamentosDiaMes lancDia = new LancamentosDiaMes();
+			
+			String textoJunto = lista.get(i);
+			String [] textoSeparado = textoJunto.split(","); 
+			
+			lancDia.setDia(textoSeparado[0]);
+			BigDecimal total = new BigDecimal(textoSeparado[1]);
+			lancDia.setTotais(total);
+			
+			lancamentoPorDia.add(lancDia);
+			
+		}
+		
+		return lancamentoPorDia;
 	}
 	
 }
