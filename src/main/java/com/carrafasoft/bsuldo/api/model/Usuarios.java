@@ -17,6 +17,8 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
+
 @Entity
 @Table(name = "usuarios")
 public class Usuarios {
@@ -86,7 +88,7 @@ public class Usuarios {
 	public void setPessoa(Pessoas pessoa) {
 		this.pessoa = pessoa;
 	}
-
+	
 	public List<Permissao> getPermissoes() {
 		return permissoes;
 	}
@@ -135,7 +137,8 @@ public class Usuarios {
 	private void toUpperCase() {
 
 		nomeUsuario = nomeUsuario.trim().toUpperCase();
-		senha = senha.trim();
+		//senha = senha.trim();
+		senha = FuncoesUtils.geraPasswordCrippt(senha.trim());
 	}
 
 }

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.reports.LancamentosDiaMes;
+import com.carrafasoft.bsuldo.api.model.reports.TotaisPorAno;
 import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
 import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
@@ -105,12 +106,6 @@ public class LancamentoResource {
 	public List<Lancamentos> listarLancamentosVencidos() {
 		
 		return lancamentoRepository.buscaLancamentosVencidos();
-	}
-	
-	@GetMapping("/totais-por-ano")
-	public List<?> lancamentosNoAno() {
-		
-		return lancamentoRepository.listarTotaisPorAno();
 	}
 	
 	@GetMapping("/pesquisa")
@@ -258,6 +253,9 @@ public class LancamentoResource {
 				FuncoesUtils.converterStringParaLocalDate(dataFim)
 				);
 		
+		int qtdDiasMes = FuncoesUtils.quantidadeDiasNoMes(FuncoesUtils.converterStringParaLocalDate(dataIni));
+		
+		
 		List<LancamentosDiaMes> lancamentoPorDia = new ArrayList<LancamentosDiaMes>();
 		
 		for (int i = 0; i < lista.size(); i++) {
@@ -271,11 +269,134 @@ public class LancamentoResource {
 			BigDecimal total = new BigDecimal(textoSeparado[1]);
 			lancDia.setTotais(total);
 			
-			lancamentoPorDia.add(lancDia);
+			lancamentoPorDia.add(lancDia);	
+		}
+		
+		
+		List<LancamentosDiaMes> lancamentoPorDiaCompleto = new ArrayList<LancamentosDiaMes>();
+		
+		for (int i = 1; i <= qtdDiasMes; i++) {
+			
+			LancamentosDiaMes lancDiaCompleto = new LancamentosDiaMes();
+			String dia = Integer.valueOf(i).toString();
+			
+			Boolean operador = true;
+					
+			
+			for (int j = 0; j < lancamentoPorDia.size(); j++) {
+
+				if(lancamentoPorDia.get(j).getDia().equals(dia)) {
+					
+					lancDiaCompleto.setDia(dia);
+					lancDiaCompleto.setTotais(lancamentoPorDia.get(j).getTotais());
+					operador = false;
+				}
+				
+			}
+
+			if(operador) {
+				
+				lancDiaCompleto.setDia(dia);
+				lancDiaCompleto.setTotais(BigDecimal.ZERO);
+				operador = true;
+			}
+			
+			
+			lancamentoPorDiaCompleto.add(lancDiaCompleto);
+		}
+		
+		//return lancamentoPorDia;
+		return lancamentoPorDiaCompleto;
+	}
+	
+	@GetMapping("/totais-por-ano")
+	public List<TotaisPorAno> lancamentosNoAno(@RequestParam("ano") String ano) {
+		
+		List<String> totaisAnoString = lancamentoRepository.listarTotaisPorAno(ano);
+		
+		List<TotaisPorAno> listaTotaisPorAno = new ArrayList<TotaisPorAno>();
+		
+		for (int i = 0; i < totaisAnoString.size(); i++) {
+			
+			TotaisPorAno totalPorAno = new TotaisPorAno();
+			
+			String textoJunto = totaisAnoString.get(i);
+			String [] textoSeparado = textoJunto.split(","); 
+			
+			if(textoSeparado[0].equals("null")) {
+				totalPorAno.setJan("0");
+			} else {
+				totalPorAno.setJan(textoSeparado[0]);
+			}
+			if(textoSeparado[1].equals("null")) {
+				totalPorAno.setFev("0");
+			} else {
+				totalPorAno.setFev(textoSeparado[1]);
+			}
+			if(textoSeparado[2].equals("null")) {
+				totalPorAno.setMar("0");
+			} else {
+				totalPorAno.setMar(textoSeparado[2]);
+			}
+			if(textoSeparado[3].equals("null")) {
+				totalPorAno.setAbr("0");
+			} else {
+				totalPorAno.setAbr(textoSeparado[3]);
+			}
+			if(textoSeparado[4].equals("null")) {
+				totalPorAno.setMai("0");
+			} else {
+				totalPorAno.setMai(textoSeparado[4]);
+			}
+			if(textoSeparado[5].equals("null")) {
+				totalPorAno.setJun("0");
+			} else {
+				totalPorAno.setJun(textoSeparado[5]);
+			}
+			if(textoSeparado[6].equals("null")) {
+				totalPorAno.setJul("0");
+			} else {
+				totalPorAno.setJul(textoSeparado[6]);
+			}
+			if(textoSeparado[7].equals("null")) {
+				totalPorAno.setAgo("0");
+			} else {
+				totalPorAno.setAgo(textoSeparado[7]);
+			}
+			if(textoSeparado[8].equals("null")) {
+				totalPorAno.setSet("0");
+			} else {
+				totalPorAno.setSet(textoSeparado[8]);
+			}
+			if(textoSeparado[9].equals("null")) {
+				totalPorAno.setOut("0");
+			} else {
+				totalPorAno.setOut(textoSeparado[9]);
+			}
+			if(textoSeparado[10].equals("null")) {
+				totalPorAno.setNov("0");
+			} else {
+				totalPorAno.setNov(textoSeparado[10]);
+			}
+			if(textoSeparado[11].equals("null")) {
+				totalPorAno.setDez("0");
+			} else {
+				totalPorAno.setDez(textoSeparado[11]);
+			}
+			
+			if(textoSeparado[12].equals("null")) {
+				totalPorAno.setTotal(BigDecimal.ZERO);
+			} else {
+				totalPorAno.setTotal(new BigDecimal(textoSeparado[12]));
+			}
+			
+			
+			
+			listaTotaisPorAno.add(totalPorAno);
 			
 		}
 		
-		return lancamentoPorDia;
+		return listaTotaisPorAno;
 	}
 	
 }

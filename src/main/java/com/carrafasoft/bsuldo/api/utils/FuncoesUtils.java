@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import com.sun.el.parser.ParseException;
 
 public class FuncoesUtils {
@@ -79,6 +81,30 @@ public class FuncoesUtils {
 		
 		LocalDate dataConvertida = data.toLocalDate();
 		return dataConvertida;
+	}
+	
+	/**
+	 * Pega a quantidade total de dias de um mês
+	 * @param LocalDate data
+	 * 
+	 * **/
+	public static int quantidadeDiasNoMes(LocalDate data) {
+
+		int diasNoMes = data.lengthOfMonth();
+		
+		return diasNoMes;
+	}
+	
+	/**
+	 * Criptografa o password
+	 * @param String password
+	 * 
+	 * **/
+	public static String geraPasswordCrippt(String password) {
+		
+		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+		
+		return encoder.encode(password);
 	}
 
 }

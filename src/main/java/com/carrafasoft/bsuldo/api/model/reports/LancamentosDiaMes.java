@@ -23,4 +23,11 @@ public class LancamentosDiaMes {
 		this.totais = totais;
 	}
 
+	@Override
+	public String toString() {
+		return dia;
+	}
+	
+	
+
 }
