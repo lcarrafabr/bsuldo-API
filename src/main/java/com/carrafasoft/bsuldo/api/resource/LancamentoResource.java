@@ -24,7 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.reports.LancamentosDiaMes;
+import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
 import com.carrafasoft.bsuldo.api.model.reports.TotaisPorAno;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
 import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
 import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
@@ -397,6 +399,16 @@ public class LancamentoResource {
 		}
 		
 		return listaTotaisPorAno;
+	}
+	
+	
+	//public List<TotalMetodoCobranca> gradeLancamentosPorMetodoCobranca(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	@GetMapping("/grade-lancamentos-por-metodo_cobranca")
+	public List<TotalMetodoCobranca> gradeLancamentosPorMetodoCobranca(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+		
+		List<TotalMetodoCobranca> lista = lancamentoService.geraGradelancamentosPorMetodoCobranca(dataIni, dataFim);
+		
+		return lista;
 	}
 	
 }

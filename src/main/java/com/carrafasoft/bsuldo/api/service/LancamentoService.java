@@ -2,6 +2,9 @@ package com.carrafasoft.bsuldo.api.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.MonthDay;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +21,9 @@ import org.springframework.stereotype.Service;
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
+import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
 
@@ -164,6 +170,114 @@ public class LancamentoService {
 		}
 		
 		return lancamentoRepository.save(lancamentoSalvo);
+	}
+	
+	public List<TotalMetodoCobranca> geraGradelancamentosPorMetodoCobranca(String dataIni, String dataFim) {
+		
+		int mes = FuncoesUtils.converterStringParaLocalDate(dataIni).getMonthValue();
+		int ano = FuncoesUtils.converterStringParaLocalDate(dataFim).getYear();
+		
+		/*************************** PRIMEIRA PARTE **********************************************************************/
+		List<String> listaString = lancamentoRepository.lancamentosPorMetodoCobranca(mes, ano);
+		List<LancamentosPorMetodoCobranca> listaLancPorCobranca = new ArrayList<LancamentosPorMetodoCobranca>();
+		
+		for (int i = 0; i < listaString.size(); i++) {
+			
+			LancamentosPorMetodoCobranca lancPorMetCob = new LancamentosPorMetodoCobranca();
+			String textojunto = listaString.get(i);
+			String [] textoSeparado = textojunto.split(",");
+			
+			lancPorMetCob.setNomeMetodoCobranca(textoSeparado[0]);
+			lancPorMetCob.setDescricaoLancamento(textoSeparado[1]);
+			lancPorMetCob.setValor(new BigDecimal(textoSeparado[2]));
+			lancPorMetCob.setSituacao(textoSeparado[3]);
+			lancPorMetCob.setParcela(textoSeparado[4]);
+			
+			listaLancPorCobranca.add(lancPorMetCob);
+			
+		}
+		
+		/*************************** SEGUNDA PARTE **********************************************************************/
+		
+		List<String> listametodoCob = lancamentoRepository.totalPorMetodoCobrancaMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				);
+		
+		List<TotalMetodoCobrancaMes> totalMetodoCobrancaMes = new ArrayList<TotalMetodoCobrancaMes>();
+		
+		for (int i = 0; i < listametodoCob.size(); i++) {
+			
+			TotalMetodoCobrancaMes totalMetCob = new TotalMetodoCobrancaMes();
+			
+			String textoJunto = listametodoCob.get(i);
+			String [] textoSeparado = textoJunto.split(",");
+			
+			totalMetCob.setNomeMetodoCobranca(textoSeparado[0]);
+			BigDecimal total = new BigDecimal(textoSeparado[1]);
+			totalMetCob.setTotais(total);
+			
+			totalMetodoCobrancaMes.add(totalMetCob);
+			
+		}
+		
+		/*************************** TERCEIRA PARTE **********************************************************************/
+		
+		List<TotalMetodoCobranca> listFinal = new ArrayList<TotalMetodoCobranca>();
+		
+		Long id01 = 0L;
+		Long id02 = 0L;
+		
+		for (int i = 0; i < totalMetodoCobrancaMes.size(); i++) {
+			
+			id01 = 1000L * i;
+			id02 = id01;
+			
+			String nomeMetodoCobranca = totalMetodoCobrancaMes.get(i).getNomeMetodoCobranca();
+			LancamentosPorMetodoCobranca lancMetCob = new LancamentosPorMetodoCobranca();
+			List<LancamentosPorMetodoCobranca> list01 = new ArrayList<LancamentosPorMetodoCobranca>();
+			TotalMetodoCobranca totalmetodo = new TotalMetodoCobranca();
+
+			
+			for (int j = 0; j < listaLancPorCobranca.size(); j++) {
+				
+				String nomeMetodoCobranca02 = listaLancPorCobranca.get(j).getNomeMetodoCobranca();
+				
+				if(totalMetodoCobrancaMes.get(i).getNomeMetodoCobranca().equalsIgnoreCase(nomeMetodoCobranca02)) {
+					
+					lancMetCob.setId(id02);
+					lancMetCob.setNomeMetodoCobranca(listaLancPorCobranca.get(j).getNomeMetodoCobranca());
+					lancMetCob.setDescricaoLancamento(listaLancPorCobranca.get(j).getDescricaoLancamento());
+					lancMetCob.setValor(listaLancPorCobranca.get(j).getValor());
+					lancMetCob.setSituacao(listaLancPorCobranca.get(j).getSituacao());
+					lancMetCob.setParcela(listaLancPorCobranca.get(j).getParcela());
+					
+					list01.add(lancMetCob);
+					lancMetCob = new LancamentosPorMetodoCobranca();
+					
+					id02 ++;
+				}
+				
+				
+				
+				
+			}
+			
+			totalmetodo.setId(id01);
+			totalmetodo.setNomeMetodoCobranca(totalMetodoCobrancaMes.get(i).getNomeMetodoCobranca());
+			totalmetodo.setLancMetodoCobrancaMes(list01);
+			totalmetodo.setTotais(totalMetodoCobrancaMes.get(i).getTotais());
+			
+			listFinal.add(totalmetodo);
+			
+			
+			
+		}
+		
+		
+		
+		
+		return listFinal;
 	}
 
 	private String gerarChavePesquisa() {
