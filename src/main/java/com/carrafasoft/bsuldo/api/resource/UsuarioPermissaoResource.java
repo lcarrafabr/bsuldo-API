@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
@@ -65,6 +66,17 @@ public class UsuarioPermissaoResource {
 	public List<Permissao> permissoesDisponiveis(@PathVariable Long codigo) {
 		
 		return usuarioPermissaoService.retornaPermissoesDisponiveis(codigo);
+	}
+	
+	@PostMapping("cadastrat-permissoes")
+	public List<Permissao> cadastraPermissoesusuarioViaList(@RequestBody List<Permissao> lista,@RequestParam("id") String id, HttpServletResponse response) {
+		
+		usuarioPermissaoService.cadastrarPermissoesUsuario(lista, id);
+		
+		System.out.println("ID: " + id);
+		
+		
+		return null;
 	}
 
 }

@@ -68,5 +68,33 @@ public class UsuarioPermissaoService {
 		
 		return permissoesDisponiveis;
 	}
+	
+	
+	public void cadastrarPermissoesUsuario(List<Permissao> listaRecebida, String codigousuario) {
+		
+		Long idUsuario = Long.parseLong(codigousuario);
+		
+		List<UsuarioPermissao> userPermissaoSalvo = usuarioPermissaoRepository.pesquisaPermissoesDoUsuario(idUsuario);
+		List<Permissao> permissoesList = permissaoRepository.findAll();
+		
+		int qtdListarecebida = listaRecebida.size();
+		int qtdPermissoes = permissoesList.size();
+		
+
+		if(qtdListarecebida == 0) {
+			
+			//TODO deletar todas as permissões
+		}
+		
+		if(qtdListarecebida < userPermissaoSalvo.size()) {
+			
+			//TODO verificar qual permissão deve ser removida
+		}
+		
+		if(qtdListarecebida > userPermissaoSalvo.size()) {
+			
+			//TODO verificar qual permissão deve ser adicionada
+		}
+	}
 
 }
