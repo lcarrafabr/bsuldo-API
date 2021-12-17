@@ -2,26 +2,27 @@ package com.carrafasoft.bsuldo.api.service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.carrafasoft.bsuldo.api.model.Permissao;
 import com.carrafasoft.bsuldo.api.model.UsuarioPermissao;
 import com.carrafasoft.bsuldo.api.repository.PermissaoRepository;
 import com.carrafasoft.bsuldo.api.repository.UsuarioPermissaoRepository;
-import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
 
 @Service
 public class UsuarioPermissaoService {
-	
-	@Autowired
-	private UsuarioRepository usuarioRepository;
 	
 	@Autowired
 	private UsuarioPermissaoRepository usuarioPermissaoRepository;
 	
 	@Autowired
 	private PermissaoRepository permissaoRepository;
+	
+	@Autowired
+	private ApplicationEventPublisher publisher;
 	
 	
 	public List<Permissao> retornaPermissoesDisponiveis(Long codigo) {
@@ -34,6 +35,7 @@ public class UsuarioPermissaoService {
 		int qtdPermissoes = permissoesList.size();
 		
 		List<Permissao> permissoesDisponiveis = new ArrayList<Permissao>();
+		List<Permissao> listToRemoves = new ArrayList<Permissao>();
 		
 		if(qtdUserpermition == 0) {
 			
@@ -55,46 +57,104 @@ public class UsuarioPermissaoService {
 					
 					if(userPermissaoSalvo.get(j).getPermissaoId().equals(codigoPermissao)) {
 						
-						permissoesDisponiveis.remove(permissoesList.get(i));
-					}
-					
-				}
-				
+						//permissoesDisponiveis.remove(permissoesList.get(i));
+						listToRemoves.add(permissoesList.get(i));
+					}	
+				}				
 			}
+			
+			permissoesDisponiveis.removeAll(listToRemoves);
 		}	
 		
-		//System.out.println(qtdPermissoes + " - " + permissoesDisponiveis.size());
-		
-		
+		//System.out.println(qtdPermissoes + " - " + permissoesDisponiveis.size());		
 		return permissoesDisponiveis;
 	}
 	
 	
-	public void cadastrarPermissoesUsuario(List<Permissao> listaRecebida, String codigousuario) {
+	public String gerenciarPermissoesUsuario(List<Permissao> listaRecebida, String codigousuario) {
 		
 		Long idUsuario = Long.parseLong(codigousuario);
-		
-		List<UsuarioPermissao> userPermissaoSalvo = usuarioPermissaoRepository.pesquisaPermissoesDoUsuario(idUsuario);
-		List<Permissao> permissoesList = permissaoRepository.findAll();
-		
+		boolean deleteAll = false;	
+		List<Permissao> userPermissaoSalvo = permissaoRepository.pegarPermissoesCadastradasDoUsuario(idUsuario);
 		int qtdListarecebida = listaRecebida.size();
-		int qtdPermissoes = permissoesList.size();
+		String messageRetorno = "";
 		
 
 		if(qtdListarecebida == 0) {
 			
-			//TODO deletar todas as permissões
+			usuarioPermissaoRepository.deleteAllPermisstionByUser(idUsuario);
+			deleteAll = true;
+			messageRetorno = "OK";
 		}
 		
-		if(qtdListarecebida < userPermissaoSalvo.size()) {
+		if(qtdListarecebida < userPermissaoSalvo.size() && deleteAll == false) {
 			
-			//TODO verificar qual permissão deve ser removida
+			messageRetorno = removerPermissao(listaRecebida, userPermissaoSalvo, idUsuario);
+			
 		}
 		
 		if(qtdListarecebida > userPermissaoSalvo.size()) {
 			
-			//TODO verificar qual permissão deve ser adicionada
+			messageRetorno = cadastrarPermissoes(listaRecebida, userPermissaoSalvo, idUsuario);
 		}
+		return messageRetorno;
+	}
+	
+	
+	private String cadastrarPermissoes(List<Permissao> listaRecebida, List<Permissao> listaSalva, Long usuarioId) {
+		
+		String message = "";
+		
+		try {
+			List<Permissao> permissoesParaCadastrar = new ArrayList<Permissao>();
+			
+			permissoesParaCadastrar = listaRecebida;
+			permissoesParaCadastrar.removeAll(listaSalva);
+			
+			for (int i = 0; i < permissoesParaCadastrar.size(); i++) {
+				
+				UsuarioPermissao userPermition = new UsuarioPermissao();
+				
+				userPermition.setPermissaoId(permissoesParaCadastrar.get(i).getPermissaoId());
+				userPermition.setUsuarioId(usuarioId);
+				
+				usuarioPermissaoRepository.save(userPermition);
+			}
+			message = "OK";
+		} catch (Exception e) {
+			message = "NOK";
+		}
+		return message;
+		
+	}
+	
+	
+	private String removerPermissao(List<Permissao> listaRecebida, List<Permissao> listaSalva, Long usuarioId) {
+		
+		String message = "";
+		try {
+			List<Permissao> permissoesParaRemover = new ArrayList<Permissao>();
+			
+			permissoesParaRemover = listaSalva;
+			permissoesParaRemover.removeAll(listaRecebida);
+			
+			if(permissoesParaRemover.size() > 0) {
+				
+				Long permissaoId = 0L;
+				
+				for (int i = 0; i < permissoesParaRemover.size(); i++) {
+					
+					permissaoId = permissoesParaRemover.get(i).getPermissaoId();
+					
+					usuarioPermissaoRepository.deletePermissaoByUserAndPermistion(usuarioId, permissaoId);
+				}
+			}
+			
+			message = "OK";
+		} catch (Exception e) {
+			message = "NOK";
+		}
+		return message;
 	}
 
 }

@@ -9,6 +9,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,29 +22,62 @@ import org.springframework.stereotype.Service;
 
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.mail.Mailer;
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
+import com.carrafasoft.bsuldo.api.model.Usuarios;
 import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
 import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
 import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
+import com.carrafasoft.bsuldo.api.repository.PessoaRepository;
+import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
+import com.carrafasoft.bsuldo.api.resource.CategoriaResource;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
 
 @Service
 public class LancamentoService {
+	
+	private static final Logger logger = LoggerFactory.getLogger(Lancamentos.class);
 
 	@Autowired
 	private LancamentoRepository lancamentoRepository;
+	
+	@Autowired
+	private UsuarioRepository usuarioRepository;
 
 	@Autowired
 	private ApplicationEventPublisher publisher;
+	
+	@Autowired
+	private Mailer mailer;
 	
 	
 	@Scheduled(cron = "0 0 0 * * *")
 	public void atualizarStatusLancamentoVencidos() {
 		
-		System.out.println("Atualizado a situação de todos os lancamentos vencidos");
+		logger.info("*********** Atualizado a situação de todos os lancamentos vencidos **************");
 		
 		lancamentoRepository.atualizaLancamentosVencidos();
+		
+	}
+
+	//@Scheduled(fixedDelay = 1000 * 60 * 30)
+	@Scheduled(cron = "0 5 0 * * *")
+	public void enviarEmailLancamentosVencidos() {
+		
+		logger.info("*********** Verificando se existe lancamentos vencidos para enviar por e-mail **************");
+		
+		enviarLancamentosVencidosByEmail();
+		
+	}
+	
+	//@Scheduled(fixedDelay = 1000 * 60 * 30)
+	@Scheduled(cron = "0 2 0 * * *")
+	public void enviarEmailLancamentosPendVencProximosSeteDias() {
+		
+		logger.info("*********** Verificando se existe lancamentos pendentes ou vencidos nos próximos 7 dias para enviar por e-mail **************");
+		
+		enviarLancamentosPendentesVencidosByEmail();
 		
 	}
 
@@ -299,5 +334,50 @@ public class LancamentoService {
 		Lancamentos lancamentoSalvo = lancamentoRepository.findById(codigo).orElseThrow(()-> new EmptyResultDataAccessException(1));
 		return lancamentoSalvo;
 	}
+	
+	private void enviarLancamentosVencidosByEmail() {
+		
+		List<Lancamentos> lancamentosVencidos = lancamentoRepository.getLancamentosVencidos();
+		
+		if(lancamentosVencidos.size() > 0) {
+			
+			List<Usuarios> destinatarios = usuarioRepository.getusuariosParaenviarEmail();
+			
+			if(destinatarios.size() > 0) {
+				
+				logger.info("Enviando lançamentos vencidos por e-mail. Total de lançamentos vencidos: " + lancamentosVencidos.size());
+				mailer.avisarLancamentosVencidos(lancamentosVencidos, destinatarios);
+				
+			} else {
+				logger.warn("Não tem emails cadastrados para enviar e-mail");
+			}
+		}else {
+			
+			logger.info("Não existe. lançamentos vencidos.");
+		}
+	}
+	
+	
+	private void enviarLancamentosPendentesVencidosByEmail() {
+			
+			List<Lancamentos> lancamentosPendentes = lancamentoRepository.getLancamentosProximosSeteDias();
+			
+			if(lancamentosPendentes.size() > 0) {
+				
+				List<Usuarios> destinatarios = usuarioRepository.getusuariosParaenviarEmail();
+				
+				if(destinatarios.size() > 0) {
+					
+					logger.info("Enviando lançamentos pendentes por e-mail. Total de lançamentos pendentes: " + lancamentosPendentes.size());
+					mailer.avisarLancamentosPendentes(lancamentosPendentes, destinatarios);
+					
+				} else {
+					logger.warn("Não tem emails cadastrados para enviar e-mail");
+				}
+			}else {
+				
+				logger.info("Não existe. lançamentos pendentes nos proximos 7 dias");
+			}
+		}
 
 }

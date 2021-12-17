@@ -62,6 +62,13 @@ public class Permissao {
 			return false;
 		return true;
 	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Permissao [permissaoId=" + permissaoId + ", descricao=" + descricao + "]";
+	}
 
 	@PrePersist
 	public void aocadastrar() {

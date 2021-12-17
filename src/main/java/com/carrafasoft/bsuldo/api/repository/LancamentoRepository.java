@@ -217,5 +217,15 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "where month(l.data_vencimento) = :mes "
 					+ "and year(l.data_vencimento) = :ano ")
 	public List<String> lancamentosPorMetodoCobranca(int mes, int ano);
+	
+	@Query(nativeQuery = true,
+			value = "select * from lancamentos where situacao = 'VENCIDO' ")
+	public List<Lancamentos> getLancamentosVencidos();
+	
+	@Query(nativeQuery = true,
+			value = "select * from lancamentos "
+					+ "where data_vencimento between curdate() and curdate() + 7 "
+					+ "and situacao in ('PENDENTE', 'VENCIDO') ")
+	public List<Lancamentos> getLancamentosProximosSeteDias();
 
 }

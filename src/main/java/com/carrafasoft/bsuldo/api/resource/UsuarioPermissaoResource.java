@@ -71,9 +71,7 @@ public class UsuarioPermissaoResource {
 	@PostMapping("cadastrat-permissoes")
 	public List<Permissao> cadastraPermissoesusuarioViaList(@RequestBody List<Permissao> lista,@RequestParam("id") String id, HttpServletResponse response) {
 		
-		usuarioPermissaoService.cadastrarPermissoesUsuario(lista, id);
-		
-		System.out.println("ID: " + id);
+		usuarioPermissaoService.gerenciarPermissoesUsuario(lista, id);
 		
 		
 		return null;
