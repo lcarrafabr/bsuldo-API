@@ -59,6 +59,10 @@ public class Lancamentos {
 
 	@Column(name = "chave_pesquisa", length = 20, updatable = false)
 	private String chavePesquisa;
+	
+	@NotNull
+	@Column(name = "lancamento_recorrente")
+	private Boolean lancRecorrente;
 
 	@NotNull
 	@ManyToOne
@@ -153,6 +157,14 @@ public class Lancamentos {
 
 	public void setChavePesquisa(String chavePesquisa) {
 		this.chavePesquisa = chavePesquisa;
+	}
+
+	public Boolean getLancRecorrente() {
+		return lancRecorrente;
+	}
+
+	public void setLancRecorrente(Boolean lancRecorrente) {
+		this.lancRecorrente = lancRecorrente;
 	}
 
 	public Pessoas getPessoa() {

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,6 +153,7 @@ public class LancamentoService {
 			preparaSalvar.setMetodoDeCobranca(lancamento.getMetodoDeCobranca());
 			preparaSalvar.setPessoa(lancamento.getPessoa());
 			preparaSalvar.setChavePesquisa(chavePesquisa);
+			preparaSalvar.setLancRecorrente(lancamento.getLancRecorrente());
 			// preparaSalvar.setSituacao(SituacaoEnum.PENDENTE);
 
 			lancamentoSalvo2 = lancamentoRepository.save(preparaSalvar);
@@ -307,12 +309,72 @@ public class LancamentoService {
 			
 			
 			
+		}	
+		
+		return listFinal;
+	}
+	
+	
+	public ResponseEntity<Lancamentos> gerarLancamentoRecorrente(@Valid Lancamentos lancamentos, HttpServletResponse response, String qtdDias) {
+		
+		Boolean lancRecorrente = lancamentos.getLancRecorrente();
+		LocalDate dataVencimento = lancamentos.getDatavencimento();
+		int qtdDiasRecorrente = 1;
+		
+		String chavePesquisa = gerarChavePesquisa();
+		lancamentos.setChavePesquisa(chavePesquisa);
+		
+		if(qtdDias.equals(null) || qtdDias == null || qtdDias.equals("")) {
+			qtdDiasRecorrente = 1;
+		} else {
+		
+			qtdDiasRecorrente = Integer.parseInt(qtdDias);
+		}
+		
+		if(qtdDiasRecorrente < 1) {
+			qtdDiasRecorrente = 1;
+		}
+		
+		Lancamentos lancamentoSalvo = new Lancamentos();
+		
+		for (int i = 0; i < qtdDiasRecorrente; i++) {
+			Lancamentos preparaSalvar = new Lancamentos();
+			//preparaSalvar = lancamentos;
+			
+			if(i == 0) {
+				
+				lancamentoSalvo = lancamentoRepository.save(lancamentos);
+				publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getLancamentoId()));
+				
+			} else {
+				
+				dataVencimento = dataVencimento.plusMonths(1);
+				preparaSalvar.setDatavencimento(dataVencimento);
+				
+				preparaSalvar.setValor(lancamentos.getValor());
+				preparaSalvar.setDataPagamento(lancamentos.getDataPagamento());
+				preparaSalvar.setDescricao(lancamentos.getDescricao());
+				preparaSalvar.setParcelado(lancamentos.getParcelado());
+				preparaSalvar.setQuantidadeParcelas(lancamentos.getQuantidadeParcelas());
+				preparaSalvar.setNumeroParcela(1);
+				preparaSalvar.setCategoria(lancamentos.getCategoria());
+				preparaSalvar.setMetodoDeCobranca(lancamentos.getMetodoDeCobranca());
+				preparaSalvar.setPessoa(lancamentos.getPessoa());
+				preparaSalvar.setChavePesquisa(chavePesquisa);
+				preparaSalvar.setLancRecorrente(lancRecorrente);
+				
+				lancamentoRepository.save(preparaSalvar);
+				
+			}
 		}
 		
 		
 		
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo);
 		
-		return listFinal;
+		 				
+		
 	}
 
 	private String gerarChavePesquisa() {

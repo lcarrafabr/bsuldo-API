@@ -102,6 +102,12 @@ public class LancamentoResource {
 		return ResponseEntity.ok(lancamentoCancelado);
 	}
 	
+	@PostMapping("/lancamento-recorrente")
+	public ResponseEntity<Lancamentos> lancamentoRecorrente(@Valid @RequestBody Lancamentos lancamentos, HttpServletResponse response, @RequestParam("qtd_dias") String qtdDias) {
+		
+		return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias);
+	}
+	
 	//*****************************************************************************************************************************************************************************
 	
 	@GetMapping("/lancamentos-vencidos")
