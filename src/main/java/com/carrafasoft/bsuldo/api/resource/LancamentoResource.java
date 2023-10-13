@@ -108,7 +108,7 @@ public class LancamentoResource {
 		return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias);
 	}
 	
-	//*****************************************************************************************************************************************************************************
+	//************************************************************ RELATORIOS *****************************************************************************************************************
 	
 	@GetMapping("/lancamentos-vencidos")
 	public List<Lancamentos> listarLancamentosVencidos() {
@@ -181,6 +181,12 @@ public class LancamentoResource {
 	public BigDecimal totalDevedorPorAno(@RequestParam("ano") String ano) {
 		
 		return lancamentoRepository.totalDevedorPorAno(Integer.valueOf(ano));
+	}
+	
+	@GetMapping("/total-pago-por-ano")
+	public BigDecimal totalPagoNoAno(@RequestParam("ano") String ano) {
+		
+		return lancamentoRepository.totalPagoNoAno(Integer.valueOf(ano));
 	}
 	
 	@GetMapping("/perc-pago-no-mes")

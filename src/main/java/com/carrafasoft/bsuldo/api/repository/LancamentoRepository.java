@@ -12,8 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosReportsTotaisPorSemana;
-import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 
 @Repository
 public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
@@ -100,6 +98,17 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "from lancamentos "
 					+ "where year(data_vencimento) = :ano ")
 	public BigDecimal totalDevedorPorAno(int ano);
+	
+	@Query(nativeQuery = true,
+			value = "select  sum(valor) - ( "
+					+ "select  sum(valor) as total_ano "
+					+ "from lancamentos "
+					+ "where year(data_vencimento) = :ano "
+					+ "and situacao = 'PAGO' "
+					+ ")  as total_ano "
+					+ "from lancamentos "
+					+ "where year(data_vencimento) = :ano ")
+	public BigDecimal totalPagoNoAno(int ano);
 	
 	@Query(nativeQuery = true,
 			value = "select if(total_pago is not null, total_pago, 0) as perc_pago "

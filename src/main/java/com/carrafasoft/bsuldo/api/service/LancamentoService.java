@@ -52,7 +52,7 @@ public class LancamentoService {
 	@Autowired
 	private Mailer mailer;
 	
-	
+	//@Scheduled(fixedDelay = 1000 * 60 * 30)
 	@Scheduled(cron = "0 0 0 * * *")
 	public void atualizarStatusLancamentoVencidos() {
 		
@@ -318,7 +318,6 @@ public class LancamentoService {
 	public ResponseEntity<Lancamentos> gerarLancamentoRecorrente(@Valid Lancamentos lancamentos, HttpServletResponse response, String qtdDias) {
 		
 		Boolean lancRecorrente = lancamentos.getLancRecorrente();
-		LocalDate dataVencimento = lancamentos.getDatavencimento();
 		int qtdDiasRecorrente = 1;
 		
 		String chavePesquisa = gerarChavePesquisa();
@@ -348,8 +347,7 @@ public class LancamentoService {
 				
 			} else {
 				
-				dataVencimento = dataVencimento.plusMonths(1);
-				preparaSalvar.setDatavencimento(dataVencimento);
+				preparaSalvar.setDatavencimento(lancamentos.getDatavencimento().plusMonths(i));
 				
 				preparaSalvar.setValor(lancamentos.getValor());
 				preparaSalvar.setDataPagamento(lancamentos.getDataPagamento());

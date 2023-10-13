@@ -18,6 +18,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
+import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
 
 @Entity
 @Table(name = "lancamentos")
@@ -59,10 +60,14 @@ public class Lancamentos {
 
 	@Column(name = "chave_pesquisa", length = 20, updatable = false)
 	private String chavePesquisa;
-	
+
 	@NotNull
 	@Column(name = "lancamento_recorrente")
 	private Boolean lancRecorrente;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(length = 20)
+	private TipoLancamento tipoLancamento;
 
 	@NotNull
 	@ManyToOne
@@ -167,6 +172,14 @@ public class Lancamentos {
 		this.lancRecorrente = lancRecorrente;
 	}
 
+	public TipoLancamento getTipoLancamento() {
+		return tipoLancamento;
+	}
+
+	public void setTipoLancamento(TipoLancamento tipoLancamento) {
+		this.tipoLancamento = tipoLancamento;
+	}
+
 	public Pessoas getPessoa() {
 		return pessoa;
 	}
@@ -220,14 +233,14 @@ public class Lancamentos {
 	public void aoCadastrar() {
 
 		toUpperCase();
-		if(SituacaoEnum.PAGO == situacao) {
+		if (SituacaoEnum.PAGO == situacao) {
 			situacao = SituacaoEnum.PAGO;
-		} else if(SituacaoEnum.VENCIDO == situacao) {
+		} else if (SituacaoEnum.VENCIDO == situacao) {
 			situacao = SituacaoEnum.VENCIDO;
 		} else {
 			situacao = SituacaoEnum.PENDENTE;
 		}
-		
+
 	}
 
 	@PreUpdate
