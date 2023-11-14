@@ -84,4 +84,17 @@ public class BsuldoApiProperty {
 
 	}
 
+	public static class tokemApiBravi {
+
+		private String tokemApiBravi;
+
+		public String getTokemApiBravi() {
+			return tokemApiBravi;
+		}
+
+		public void setTokemApiBravi(String tokemApiBravi) {
+			this.tokemApiBravi = tokemApiBravi;
+		}
+	}
+
 }

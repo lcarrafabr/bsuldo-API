@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 
 @RestController
 @RequestMapping("/ordem-renda-fixa")
@@ -73,5 +76,22 @@ public class OrdemRendaFixaResource {
     public BigDecimal listarTotalDisponivel() {
 
         return repository.listaTotalDisponivel();
+    }
+
+    @GetMapping("/teste2")
+    public String teste2() {
+
+        long timestamp = 1697227651L * 1000; // Convert segundos para milissegundos
+
+        // Define o fuso horário como UTC
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        Date date = new Date(timestamp);
+
+        String dataFormatada = dateFormat.format(date);
+        System.out.println(dataFormatada);
+
+        return dataFormatada;
     }
 }

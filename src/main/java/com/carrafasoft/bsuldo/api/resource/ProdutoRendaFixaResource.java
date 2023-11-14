@@ -5,8 +5,11 @@ import com.carrafasoft.bsuldo.api.model.Indexes;
 import com.carrafasoft.bsuldo.api.model.ProdutoRendaFixa;
 import com.carrafasoft.bsuldo.api.repository.ProdutoRendaFixaRepository;
 import com.carrafasoft.bsuldo.api.service.ProdutoRendaFixaService;
+import com.carrafasoft.bsuldo.braviapi.modelo.Results;
+import com.carrafasoft.bsuldo.braviapi.service.ConsultarProdutoSimples;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +35,9 @@ public class ProdutoRendaFixaResource {
 
     @Autowired
     private ProdutoRendaFixaService service;
+
+    @Value("${bsuldo.tokemApiBravi.tokemApiBravi}") // Anotação para ler o valor da propriedade do arquivo application.properties
+    private String apiToken;
 
     @GetMapping
     public List<ProdutoRendaFixa> findAll() {
@@ -104,5 +110,16 @@ public class ProdutoRendaFixaResource {
         }
 
         return indexes;
+    }
+
+
+    @GetMapping("/teste2")
+    public Results teste2() {
+
+        ConsultarProdutoSimples consultarProdutoSimples = new ConsultarProdutoSimples();
+
+        Results results = ConsultarProdutoSimples.consultarProdutoPorTicker("petr4", apiToken);
+
+        return results;
     }
 }

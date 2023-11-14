@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Service
 public class EmissoresService {
@@ -42,6 +43,18 @@ public class EmissoresService {
         Emissores emissorSalvo = buscaPorId(codigo);
         emissorSalvo.setStatus(ativo);
         repository.save(emissorSalvo);
+    }
+
+    public List<Emissores> buscaEmissorPorNome(String nomeEmissor) {
+        return repository.buscaPorNomeEmissor(nomeEmissor);
+    }
+
+    public Emissores cadastrarEmissorAutomatico(Emissores emissores, HttpServletResponse response) {
+
+        Emissores emissorSalvo = repository.save(emissores);
+        publisher.publishEvent(new RecursoCriadoEvent(this, response, emissorSalvo.getEmissorId()));
+
+        return emissorSalvo;
     }
 
     private Emissores buscaPorId(Long codigo) {
