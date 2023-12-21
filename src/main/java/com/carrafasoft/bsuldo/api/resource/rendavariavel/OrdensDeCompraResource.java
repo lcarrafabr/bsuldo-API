@@ -86,6 +86,12 @@ public class OrdensDeCompraResource {
         return relatorioBasico;
     }
 
+    @GetMapping("/busca-ordem-por-nome-ticker")
+    public List<OrdensDeCompra> buscaPorNomeTicker(@RequestParam("ticker") String ticker) {
+
+        return repository.buscaPorNomeProduto(ticker);
+    }
+
 
 
 

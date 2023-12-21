@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -72,6 +73,15 @@ public class ProdutoRendaVariavelResource {
     public void removerProdutoRV(@PathVariable Long codigo) {
 
         repository.deleteById(codigo);
+    }
+
+    @GetMapping("/busca-por-nome-produto-rv")
+    public List<ProdutosRendaVariavel> buscaPorNomeProdutoRV(@RequestParam("ticker") String ticker) {
+
+        if(StringUtils.hasLength(ticker)) {
+            ticker = ticker.trim();
+        }
+        return repository.buscaPorNomeProdutoRV(ticker);
     }
 
 

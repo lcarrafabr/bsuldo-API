@@ -20,4 +20,8 @@ public interface SetoresRepository extends JpaRepository<Setores, Long> {
             value = "select * from setores "
                     + "where nome_setor LIKE %:nomeSetor% ")
     public List<Setores> buscaPorNomeSetor(String nomeSetor);
+
+    @Query(nativeQuery = true,
+            value = "select * from setores where status = 1")
+    public List<Setores> buscaSetorAtivo();
 }

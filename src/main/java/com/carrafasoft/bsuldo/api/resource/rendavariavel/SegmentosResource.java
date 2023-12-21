@@ -56,4 +56,16 @@ public class SegmentosResource {
 
         repository.deleteById(codigo);
     }
+
+    @PutMapping("/{codigo}/ativo")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
+
+        service.atualizaStatusAtivo(codigo, ativo);
+    }
+
+    @GetMapping("/segmentos-ativos")
+    public List<Segmentos> buscaSegmentosAtivos() {
+        return repository.buscaSegmentosAtivos();
+    }
 }

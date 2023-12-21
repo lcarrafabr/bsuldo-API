@@ -53,6 +53,13 @@ public class SegmentosService {
         return segmentoSalvo;
     }
 
+    public void atualizaStatusAtivo(Long codigo, Boolean ativo) {
+
+        Segmentos segmentoSalvo = buscaPorID(codigo);
+        segmentoSalvo.setStatus(ativo);
+        repository.save(segmentoSalvo);
+    }
+
     private Segmentos buscaPorID(Long codigo) {
 
         Segmentos segmentoSalvo = repository.findById(codigo).orElseThrow(() -> new EmptyResultDataAccessException(1));

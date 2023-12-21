@@ -70,4 +70,10 @@ public class SetoresResource {
 
         return repository.buscaPorNomeSetor(nomeSetor);
     }
+
+    @GetMapping("/setores-ativos")
+    public List<Setores> buscaSetorAtivo() {
+
+        return repository.buscaSetorAtivo();
+    }
 }

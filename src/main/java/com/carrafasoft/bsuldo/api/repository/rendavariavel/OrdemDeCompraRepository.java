@@ -26,4 +26,11 @@ public interface OrdemDeCompraRepository extends JpaRepository<OrdensDeCompra, L
                     "from ordens_de_compra " +
                     "group by produto_id ")
     List<OrdensDeCompra> listar();
+
+    @Query(nativeQuery = true,
+    value = "select oc.* " +
+            "from ordens_de_compra oc " +
+            "inner join produtos_renda_variavel p on p.produto_id = oc.produto_id " +
+            "where p.ticker LIKE %:ticker% ")
+    public List<OrdensDeCompra> buscaPorNomeProduto(String ticker);
 }
