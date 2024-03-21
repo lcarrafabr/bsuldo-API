@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import yahoofinance.Stock;
+import yahoofinance.YahooFinance;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -55,7 +57,7 @@ public class ProdutoRendaFixaResource {
     public ResponseEntity<ProdutoRendaFixa> buscaPorId(@PathVariable Long codigo) {
 
         Optional<ProdutoRendaFixa> produtoRFSalvo = repository.findById(codigo);
-        return produtoRFSalvo.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return produtoRFSalvo.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PutMapping("/{codigo}")
@@ -121,5 +123,29 @@ public class ProdutoRendaFixaResource {
         Results results = ConsultarProdutoSimples.consultarProdutoPorTicker("petr4", apiToken);
 
         return results;
+    }
+
+    @GetMapping("/yahoo-finance")
+    public void testeYahooFinance() {
+        String symbol = "PETR4.SA"; // Símbolo da Petrobras na B3
+
+        try {
+            // Obtenha a instância do Stock para o símbolo fornecido
+            Stock stock = YahooFinance.get(symbol, true);
+
+            // Verifique se a resposta não é nula e contém dados
+            if (stock != null && stock.getQuote() != null) {
+                // Obtenha informações sobre a ação
+                System.out.println("Nome da Empresa: " + stock.getName());
+                System.out.println("Preço Atual: " + stock.getQuote().getPrice());
+                System.out.println("Variação: " + stock.getQuote().getChange());
+                System.out.println("Variação Percentual: " + stock.getQuote().getChangeInPercent());
+            } else {
+                System.out.println("Resposta nula ou sem dados.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

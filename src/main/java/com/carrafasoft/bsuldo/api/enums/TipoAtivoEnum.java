@@ -12,6 +12,7 @@ public enum TipoAtivoEnum {
     TESOURO_DIRETO,
     STOCK,
     REIT,
+    RENDA_FIXA,
     OUTROS
 
 }

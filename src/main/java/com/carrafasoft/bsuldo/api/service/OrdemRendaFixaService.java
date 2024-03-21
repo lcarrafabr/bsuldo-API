@@ -30,17 +30,17 @@ public class OrdemRendaFixaService {
         BigDecimal valorRetorno = repository.verificaResgate(
                 ordemRendaFixa.getValorTransacao(), ordemRendaFixa.getProdutoRendaFixa().getProdutoRendaFixaId());
 
-        if(valorRetorno != null && valorRetorno.compareTo(BigDecimal.ZERO) >= 0) {
+        //if(!valorRetorno.equals(null) ){// || valorRetorno.compareTo(BigDecimal.ZERO) >= 0) {
 
             OrdemRendaFixa ordemRFSalvo = repository.save(ordemRendaFixa);
             publisher.publishEvent(new RecursoCriadoEvent(this, response, ordemRFSalvo.getOrdemRendaFixaId()));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(ordemRFSalvo);
 
-        } else {
+        //} else {
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao processar. O velor de resgate não pode ser maior que o investido");
-        }
+            //return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao processar. O velor de resgate não pode ser maior que o investido");
+       // }
 
 
     }

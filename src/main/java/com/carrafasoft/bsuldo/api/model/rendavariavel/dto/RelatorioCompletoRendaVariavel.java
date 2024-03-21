@@ -1,21 +1,32 @@
 package com.carrafasoft.bsuldo.api.model.rendavariavel.dto;
 
-import com.carrafasoft.bsuldo.api.enums.TipoAtivoEnum;
-
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import java.math.BigDecimal;
 
-public class RelatorioBasico {
+public class RelatorioCompletoRendaVariavel {
 
     private String tipoProdutoEnum;
+
     private String ticker;
-    private BigDecimal  precoUnitarioCota;
+
+    private BigDecimal precoUnitarioCota;
+
     private BigDecimal quantidadeCotas;
+
     private BigDecimal valorInvestido;
+
     private BigDecimal mediaInvestida;
+
     private BigDecimal percentualValorInvestido;
 
+    private BigDecimal valorCotacaoAtual; //pega da api o valor atual da cotacao
+
+    private BigDecimal variacao; //calcula a variação conforme preço medio e valor cotacao atuaL
+
+    private BigDecimal saldoVariacao; //calcula a qtd de cotas * preço atual cota
+
+    private BigDecimal ganhoPerdaProjetiva;
+
+    private String logoUrl;
 
     public String getTipoProdutoEnum() {
         return tipoProdutoEnum;
@@ -71,5 +82,45 @@ public class RelatorioBasico {
 
     public void setPercentualValorInvestido(BigDecimal percentualValorInvestido) {
         this.percentualValorInvestido = percentualValorInvestido;
+    }
+
+    public BigDecimal getValorCotacaoAtual() {
+        return valorCotacaoAtual;
+    }
+
+    public void setValorCotacaoAtual(BigDecimal valorCotacaoAtual) {
+        this.valorCotacaoAtual = valorCotacaoAtual;
+    }
+
+    public BigDecimal getVariacao() {
+        return variacao;
+    }
+
+    public void setVariacao(BigDecimal variacao) {
+        this.variacao = variacao;
+    }
+
+    public BigDecimal getSaldoVariacao() {
+        return saldoVariacao;
+    }
+
+    public void setSaldoVariacao(BigDecimal saldoVariacao) {
+        this.saldoVariacao = saldoVariacao;
+    }
+
+    public BigDecimal getGanhoPerdaProjetiva() {
+        return ganhoPerdaProjetiva;
+    }
+
+    public void setGanhoPerdaProjetiva(BigDecimal ganhoPerdaProjetiva) {
+        this.ganhoPerdaProjetiva = ganhoPerdaProjetiva;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
     }
 }

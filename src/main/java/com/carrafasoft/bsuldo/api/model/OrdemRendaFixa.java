@@ -26,6 +26,10 @@ public class OrdemRendaFixa {
     private LocalDate dataTransacao;
 
     @NotNull
+    @Column(name = "data_vencimento")
+    private LocalDate dataVencimento;
+
+    @NotNull
     private BigDecimal valorTransacao;
 
     @NotNull
@@ -73,6 +77,14 @@ public class OrdemRendaFixa {
 
     public void setDataTransacao(LocalDate dataTransacao) {
         this.dataTransacao = dataTransacao;
+    }
+
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public void setDataVencimento(LocalDate dataVencimento) {
+        this.dataVencimento = dataVencimento;
     }
 
     public BigDecimal getValorTransacao() {

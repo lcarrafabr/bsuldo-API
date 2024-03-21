@@ -2,11 +2,13 @@ package com.carrafasoft.bsuldo.api.utils;
 
 import java.sql.Date;
 import java.text.DecimalFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import com.carrafasoft.bsuldo.api.enums.DiasDaSemanaEnum;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sun.el.parser.ParseException;
@@ -97,7 +99,7 @@ public class FuncoesUtils {
 	
 	/**
 	 * Criptografa o password
-	 * @param String password
+	 * @param password password
 	 * 
 	 * **/
 	public static String geraPasswordCrippt(String password) {
@@ -105,6 +107,55 @@ public class FuncoesUtils {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 		
 		return encoder.encode(password);
+	}
+
+	/**
+	 * Retorna dia da semana em texto String
+	 * @param dataInicial*/
+	public static String retornaDataTexto(LocalDate dataInicial) {
+
+		DayOfWeek diaDaSemana = dataInicial.getDayOfWeek();
+
+		return diaDaSemana.toString();
+	}
+
+	public static String retornaDataTextoTraduzido(LocalDate dataInicial) {
+
+		DayOfWeek diaDaSemana = dataInicial.getDayOfWeek();
+		String diaDaSemanaRetorno = "";
+
+		switch (diaDaSemana) {
+
+			case MONDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.MONDAY.getDescricao();
+				break;
+
+			case TUESDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.TUESDAY.getDescricao();
+				break;
+
+			case WEDNESDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.WEDNESDAY.getDescricao();
+				break;
+
+			case THURSDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.THURSDAY.getDescricao();
+				break;
+
+			case FRIDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.FRIDAY.getDescricao();
+				break;
+
+			case SATURDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.SATURDAY.getDescricao();
+				break;
+
+			case SUNDAY:
+				diaDaSemanaRetorno = DiasDaSemanaEnum.SUNDAY.getDescricao();
+				break;
+		}
+
+		return diaDaSemanaRetorno;
 	}
 
 }

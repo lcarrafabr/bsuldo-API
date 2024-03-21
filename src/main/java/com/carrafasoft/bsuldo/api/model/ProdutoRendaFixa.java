@@ -28,10 +28,6 @@ public class ProdutoRendaFixa {
     private String sigla;
 
     @NotNull
-    @Column(name = "data_vencimento")
-    private LocalDate dataVencimento;
-
-    @NotNull
     @Column(name = "tem_imposto")
     private Boolean temImposto;
 
@@ -59,7 +55,6 @@ public class ProdutoRendaFixa {
     @Column(length = 200)
     private String rentabilidade;
 
-    @NotNull
     private Boolean status;
 
     @NotNull
@@ -103,14 +98,6 @@ public class ProdutoRendaFixa {
 
     public void setSigla(String sigla) {
         this.sigla = sigla;
-    }
-
-    public LocalDate getDataVencimento() {
-        return dataVencimento;
-    }
-
-    public void setDataVencimento(LocalDate dataVencimento) {
-        this.dataVencimento = dataVencimento;
     }
 
     public Boolean getTemImposto() {
@@ -187,7 +174,9 @@ public class ProdutoRendaFixa {
 
     @PrePersist
     public void aoCadastrar(){
+
         toUpperCase();
+        ativarStatus();
     }
 
     @PreUpdate
@@ -199,5 +188,9 @@ public class ProdutoRendaFixa {
 
         nomeProduto = nomeProduto.toUpperCase();
         sigla = sigla.toUpperCase();
+    }
+
+    private void ativarStatus() {
+        status = true;
     }
 }

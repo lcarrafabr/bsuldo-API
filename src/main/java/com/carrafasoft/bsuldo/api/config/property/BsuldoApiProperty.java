@@ -9,6 +9,7 @@ public class BsuldoApiProperty {
 	private final Mail mail = new Mail();
 
 	private String originPermitida = "http://localhost:4200";
+	//private String originPermitida = "http://192.168.1.106:4200";
 
 	public Seguranca getSeguranca() {
 		return seguranca;

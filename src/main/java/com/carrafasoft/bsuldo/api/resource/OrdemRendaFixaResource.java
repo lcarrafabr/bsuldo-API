@@ -29,7 +29,7 @@ public class OrdemRendaFixaResource {
 
     @GetMapping
     public List<OrdemRendaFixa> findAll() {
-        return repository.findAll();
+        return repository.listAllDesc();
     }
 
     @PostMapping

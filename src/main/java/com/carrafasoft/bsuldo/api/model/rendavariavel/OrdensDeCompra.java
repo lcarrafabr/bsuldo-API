@@ -151,4 +151,29 @@ public class OrdensDeCompra {
     public int hashCode() {
         return ordemDeCompraId.hashCode();
     }
+
+    @PrePersist
+    public void aoCadastrar() {
+        verificaSinalOperacao();
+    }
+
+    @PreUpdate
+    public void aoAtualizar() {
+        verificaSinalOperacao();
+    }
+
+    private void verificaSinalOperacao() {
+
+        if(valorInvestido.compareTo(BigDecimal.ZERO) > 0 &&
+        tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.VENDA)) {
+
+            valorInvestido = valorInvestido.multiply(new BigDecimal("-1"));
+        }
+
+        if(valorInvestido.compareTo(BigDecimal.ZERO) < 0 &&
+        tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.COMPRA)) {
+
+            valorInvestido = valorInvestido.multiply(new BigDecimal("-1"));
+        }
+    }
 }

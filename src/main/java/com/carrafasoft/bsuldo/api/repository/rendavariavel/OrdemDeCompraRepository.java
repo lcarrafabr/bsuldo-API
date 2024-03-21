@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -33,4 +34,17 @@ public interface OrdemDeCompraRepository extends JpaRepository<OrdensDeCompra, L
             "inner join produtos_renda_variavel p on p.produto_id = oc.produto_id " +
             "where p.ticker LIKE %:ticker% ")
     public List<OrdensDeCompra> buscaPorNomeProduto(String ticker);
+
+    @Query(nativeQuery = true,
+            value = "select * from ordens_de_compra " +
+                    "order by ordem_de_compra_id desc ")
+    public List<OrdensDeCompra> findAllDesc();
+
+    @Query(nativeQuery = true,
+    value = "select distinct * from ordens_de_compra group by produto_id")
+    List<OrdensDeCompra> buscaListaDeComprasAgrupadasPorProduto();
+
+    @Query(nativeQuery = true,
+    value = "select sum(valor_investido) as valor from ordens_de_compra")
+    BigDecimal valorTotalInvestidoRV();
 }

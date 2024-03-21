@@ -42,7 +42,7 @@ public class EmissoresResource {
 
         Optional<Emissores> emissorSalvo = repository.findById(codigo);
 
-        return emissorSalvo.isPresent() ? ResponseEntity.ok(emissorSalvo.get()) : ResponseEntity.notFound().build();
+        return emissorSalvo.isPresent() ? ResponseEntity.ok(emissorSalvo.get()) : ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{codigo}")

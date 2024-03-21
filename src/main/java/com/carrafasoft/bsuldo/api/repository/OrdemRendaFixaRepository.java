@@ -6,9 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface OrdemRendaFixaRepository extends JpaRepository<OrdemRendaFixa, Long> {
+
+
+    @Query(nativeQuery = true,
+    value = "select * from ordem_renda_fixa order by ordem_renda_fixa_id desc")
+    List<OrdemRendaFixa> listAllDesc();
 
     @Query(nativeQuery = true,
             value = "select sum(valor_transacao) as total_aplicado " +
