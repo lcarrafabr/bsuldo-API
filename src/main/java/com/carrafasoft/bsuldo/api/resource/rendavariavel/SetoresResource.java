@@ -2,6 +2,7 @@ package com.carrafasoft.bsuldo.api.resource.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.model.rendavariavel.Setores;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.SetoresRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.rendavariavel.SetoresService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,30 +24,35 @@ public class SetoresResource {
     @Autowired
     private SetoresService service;
 
-    @GetMapping
-    public List<Setores> findAll() {
+    @Autowired
+    private PessoaService pessoaService;
 
-        return repository.findAll();
+    @GetMapping
+    public List<Setores> findAll(@RequestParam("tokenId") String tokenId) {
+
+        return repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
     }
 
     @PostMapping
-    public ResponseEntity<Setores> cadastrarSetor(@Valid @RequestBody Setores setor, HttpServletResponse response) {
+    public ResponseEntity<Setores> cadastrarSetor(@Valid @RequestBody Setores setor,
+                                                  @RequestParam("tokenId") String tokenId, HttpServletResponse response) {
 
-        return service.cadastrarSetor(setor, response);
+        return service.cadastrarSetor(setor, response, tokenId);
     }
 
     @GetMapping("/{codigo}")
-    public ResponseEntity<Setores> buscaPorId(@PathVariable Long codigo) {
+    public ResponseEntity<Setores> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
 
-        Optional<Setores> setorSalvo = repository.findById(codigo);
+        Optional<Setores> setorSalvo = repository.findByIdAndPessoaId(codigo, pessoaService.recuperaIdPessoaByToken(tokenId));
 
         return setorSalvo.isPresent() ? ResponseEntity.ok(setorSalvo.get()) : ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<Setores> atualizarSetor(@PathVariable Long codigo, @Valid @RequestBody Setores setor) {
+    public ResponseEntity<Setores> atualizarSetor(@PathVariable Long codigo, @Valid @RequestBody Setores setor,
+                                                  @RequestParam("tokenId") String tokenId) {
 
-        Setores setorSalvo = service.atualizarSetor(codigo, setor);
+        Setores setorSalvo = service.atualizarSetor(codigo, setor, tokenId);
 
         return ResponseEntity.ok(setorSalvo);
     }
@@ -72,8 +78,8 @@ public class SetoresResource {
     }
 
     @GetMapping("/setores-ativos")
-    public List<Setores> buscaSetorAtivo() {
+    public List<Setores> buscaSetorAtivo(@RequestParam("tokenId") String tokenId) {
 
-        return repository.buscaSetorAtivo();
+        return repository.buscaSetorAtivo(pessoaService.recuperaIdPessoaByToken(tokenId));
     }
 }

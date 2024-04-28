@@ -12,8 +12,12 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "cores_config")
 public class CoresConfig {
@@ -30,68 +34,15 @@ public class CoresConfig {
 	@NotNull
 	@Column(name = "cor_secundaria", length = 10)
 	private String corSecundaria;
+
+	@NotNull
+	@Column(name = "usar_cores_padrao")
+	private Boolean usarCoresPadrao;
 	
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "pessoa_id")
 	private Pessoas pessoa;
-
-	public Pessoas getPessoa() {
-		return pessoa;
-	}
-
-	public void setPessoa(Pessoas pessoa) {
-		this.pessoa = pessoa;
-	}
-
-	public Long getCoresConfigId() {
-		return coresConfigId;
-	}
-
-	public void setCoresConfigId(Long coresConfigId) {
-		this.coresConfigId = coresConfigId;
-	}
-
-	public String getCorPrincipal() {
-		return corPrincipal;
-	}
-
-	public void setCorPrincipal(String corPrincipal) {
-		this.corPrincipal = corPrincipal;
-	}
-
-	public String getCorSecundaria() {
-		return corSecundaria;
-	}
-
-	public void setCorSecundaria(String corSecundaria) {
-		this.corSecundaria = corSecundaria;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((coresConfigId == null) ? 0 : coresConfigId.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CoresConfig other = (CoresConfig) obj;
-		if (coresConfigId == null) {
-			if (other.coresConfigId != null)
-				return false;
-		} else if (!coresConfigId.equals(other.coresConfigId))
-			return false;
-		return true;
-	}
 	
 	@PrePersist
 	public void aoCadastrar() {

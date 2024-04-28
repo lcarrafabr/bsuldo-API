@@ -1,8 +1,10 @@
 package com.carrafasoft.bsuldo.api.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.Setores;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.SetoresRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,9 +22,15 @@ public class SetoresService {
     private SetoresRepository repository;
 
     @Autowired
+    private PessoaService pessoaService;
+
+    @Autowired
     private ApplicationEventPublisher publisher;
 
-    public ResponseEntity<Setores> cadastrarSetor(Setores setor, HttpServletResponse response) {
+    public ResponseEntity<Setores> cadastrarSetor(Setores setor, HttpServletResponse response, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        setor.setPessoa(pessoaSalva);
 
         setor.setStatus(true);
         Setores setorSalvo = repository.save(setor);
@@ -31,16 +39,19 @@ public class SetoresService {
         return ResponseEntity.status(HttpStatus.CREATED).body(setorSalvo);
     }
 
-    public Setores atualizarSetor(Long codigo, Setores setor) {
+    public Setores atualizarSetor(Long codigo, Setores setor, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        setor.setPessoa(pessoaSalva);
 
         Setores setorSalvo = buscaPorId(codigo);
         BeanUtils.copyProperties(setor, setorSalvo, "setorId");
         return repository.save(setorSalvo);
     }
 
-    public Setores verificaSetorCadastrado(String nomeSetor) {
+    public Setores verificaSetorCadastrado(String nomeSetor, Long pessoaId) {
 
-        Setores setorId = repository.buscaPorNomeCategoria(nomeSetor);
+        Setores setorId = repository.buscaPorNomeCategoria(nomeSetor, pessoaId);
         return setorId;
     }
 

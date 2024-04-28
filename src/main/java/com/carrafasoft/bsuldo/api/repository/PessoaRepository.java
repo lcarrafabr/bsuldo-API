@@ -23,4 +23,8 @@ public interface PessoaRepository extends JpaRepository<Pessoas, Long>{
 					+ "where pessoa_id not in (select pessoa_id from usuarios) ")
 	public List<Pessoas> buscaPessoaSemUsuario();
 
+	@Query(nativeQuery = true,
+	value = "select pessoa_id from pessoas " +
+			"where pessoa_id_token = :tokenDescript ")
+    Long buscaIdPessoaByToken(String tokenDescript);
 }

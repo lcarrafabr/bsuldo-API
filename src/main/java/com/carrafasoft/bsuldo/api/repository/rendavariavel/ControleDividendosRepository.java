@@ -15,12 +15,18 @@ public interface ControleDividendosRepository extends JpaRepository<ControleDivi
     List<ControleDividendos> findAll(Sort sort);
 
     @Query(nativeQuery = true,
-    value = "select sum(valor_recebido) as totalDivRecebido " +
+    value = "select * from controle_dividendos " +
+            "where pessoa_id = :pessoaId " +
+            "order by controle_dividendos_id desc ")
+    List<ControleDividendos>findAllByPessoaId(Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "select COALESCE(SUM(valor_recebido), 0) as totalDivRecebido " +
             "from controle_dividendos " +
             "where tipo_div_recebimento_enum = 'RECEBIDO' " +
-            "and valor_recebido > 0 ")// +
-           // "and div_utilizado = 1 ")
-    BigDecimal valorTotalDivRecebido();
+            "and valor_recebido > 0 " +
+            "and pessoa_id = :pessoaId ")
+    BigDecimal valorTotalDivRecebido(Long pessoaId);
 
 
     @Query(nativeQuery = true,
@@ -28,6 +34,24 @@ public interface ControleDividendosRepository extends JpaRepository<ControleDivi
                     "from controle_dividendos " +
                     "where tipo_div_recebimento_enum = 'RECEBIDO' " +
                     "and valor_recebido > 0 " +
-                    "and div_utilizado = 0 ")
-    BigDecimal valorTotalDivDisponivel();
+                    "and div_utilizado = 0 " +
+                    "and pessoa_id = :pessoaId ")
+    BigDecimal valorTotalDivDisponivel(Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "select * from controle_dividendos " +
+            "where data_pagamento = CURRENT_DATE " +
+            "order by pessoa_id ")
+    List<ControleDividendos> verificaDividendosAReceber();
+
+    @Query(nativeQuery = true,
+            value = "select pessoa_id from controle_dividendos " +
+                    "where data_pagamento = CURRENT_DATE " +
+                    "group by pessoa_id " +
+                    "order by pessoa_id ")
+    List<Long> retornaListaDePessoasComDividendosAReceberNoDiaAtual();
+
+
+
+
 }

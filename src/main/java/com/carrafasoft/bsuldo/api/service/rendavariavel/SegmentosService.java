@@ -1,8 +1,10 @@
 package com.carrafasoft.bsuldo.api.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.Segmentos;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.SegmentosRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,8 +24,14 @@ public class SegmentosService {
     @Autowired
     private ApplicationEventPublisher publisher;
 
-    public ResponseEntity<Segmentos> cadastrarSegmento(Segmentos segmento, HttpServletResponse response) {
+    @Autowired
+    private PessoaService pessoaService;
 
+    public ResponseEntity<Segmentos> cadastrarSegmento(Segmentos segmento, HttpServletResponse response, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+        segmento.setPessoa(pessoaSalva);
         segmento.setStatus(true);
         Segmentos segmentoSalvo = repository.save(segmento);
         publisher.publishEvent(new RecursoCriadoEvent(this, response, segmentoSalvo.getSegmentoId()));
@@ -31,7 +39,11 @@ public class SegmentosService {
         return ResponseEntity.status(HttpStatus.CREATED).body(segmentoSalvo);
     }
 
-    public Segmentos atualizarSegmento(Long codigo, Segmentos segmento) {
+    public Segmentos atualizarSegmento(Long codigo, Segmentos segmento, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+        segmento.setPessoa(pessoaSalva);
 
         Segmentos segmentoSalvo = buscaPorID(codigo);
         BeanUtils.copyProperties(segmento, segmentoSalvo, "segmentoId");
@@ -39,9 +51,9 @@ public class SegmentosService {
         return repository.save(segmentoSalvo);
     }
 
-    public Segmentos pesquisaPorNomeSegmento(String nomeSegmento) {
+    public Segmentos pesquisaPorNomeSegmento(String nomeSegmento, Long pessoaId) {
 
-        return repository.buscaPorNomeSegmento(nomeSegmento);
+        return repository.buscaPorNomeSegmento(nomeSegmento, pessoaId);
     }
 
     public Segmentos cadastrarSegmentoAutomatico(Segmentos segmento, HttpServletResponse response) {

@@ -1,10 +1,16 @@
 package com.carrafasoft.bsuldo.api.model.rendavariavel;
 
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "segmentos")
 public class Segmentos {
@@ -20,44 +26,10 @@ public class Segmentos {
 
     private Boolean status;
 
-    public Long getSegmentoId() {
-        return segmentoId;
-    }
-
-    public void setSegmentoId(Long segmentoId) {
-        this.segmentoId = segmentoId;
-    }
-
-    public String getNomeSegmento() {
-        return nomeSegmento;
-    }
-
-    public void setNomeSegmento(String nomeSegmento) {
-        this.nomeSegmento = nomeSegmento;
-    }
-
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Segmentos segmentos = (Segmentos) o;
-
-        return segmentoId.equals(segmentos.segmentoId);
-    }
-
-    @Override
-    public int hashCode() {
-        return segmentoId.hashCode();
-    }
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "pessoa_id")
+    private Pessoas pessoa;
 
     @PrePersist
     public void aoCadastrar() {

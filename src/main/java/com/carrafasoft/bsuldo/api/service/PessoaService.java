@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.service;
 
+import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,11 @@ public class PessoaService {
 		}
 
 		return pessoaSalva;
+	}
+
+	public Long recuperaIdPessoaByToken(String tokenCriptografado) {
+
+		return pessoaRepository.buscaIdPessoaByToken(FuncoesUtils.decryptFromBase64(tokenCriptografado));
 	}
 
 }

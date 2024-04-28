@@ -3,6 +3,7 @@ package com.carrafasoft.bsuldo.api.config.token;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -21,6 +22,7 @@ public class CustomTokenEnhancer implements TokenEnhancer {
 		addInfo.put("nomeUsuario", usuarioSistema.getUsuario().getNomeUsuario());
 		addInfo.put("id", usuarioSistema.getUsuario().getPessoa().getPessoaID());
 		addInfo.put("nome", usuarioSistema.getUsuario().getPessoa().getNomePessoa());
+		addInfo.put("idToken", FuncoesUtils.encryptToBase64(usuarioSistema.getUsuario().getPessoa().getPessoIdToken()));
 		
 		((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(addInfo);
 		return accessToken;

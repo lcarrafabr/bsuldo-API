@@ -3,8 +3,10 @@ package com.carrafasoft.bsuldo.api.service.rendavariavel.dto;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.MesesValorDTO;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.ValorDividendosRecebidosPorMesEAno;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.ValorPorAnoGridDTO;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.hibernate.transform.ResultTransformer;
 import org.hibernate.transform.Transformers;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -21,13 +23,17 @@ public class DashboardInvestimentosService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<ValorDividendosRecebidosPorMesEAno> buscaTotalDividiendosPorMesEAno() {
+    @Autowired
+    private PessoaService pessoaService;
+
+    public List<ValorDividendosRecebidosPorMesEAno> buscaTotalDividiendosPorMesEAno(Long pessoaID) {
         // Sua consulta SQL nativa
         String sql = "select data_referencia as dataReferencia, " +
                 "sum(valor_recebido) as valorRecebido " +
                 "from controle_dividendos " +
                 "where tipo_div_recebimento_enum = 'RECEBIDO' " +
                 "and year(data_referencia) = '2024' " +
+                "and pessoa_id = " + pessoaID + " " +
                 "group by data_referencia " +
                 "order by data_referencia asc ";
 
@@ -67,10 +73,10 @@ public class DashboardInvestimentosService {
         return resultados;
     }
 
-    public ValorPorAnoGridDTO buscaValorDividendosPorAno() {
+    public ValorPorAnoGridDTO buscaValorDividendosPorAno(String pessoaId) {
 
         ValorPorAnoGridDTO valorRetorno = new ValorPorAnoGridDTO();
-        List<ValorDividendosRecebidosPorMesEAno> divsRecebidos = buscaTotalDividiendosPorMesEAno();
+        List<ValorDividendosRecebidosPorMesEAno> divsRecebidos = buscaTotalDividiendosPorMesEAno(pessoaService.recuperaIdPessoaByToken(pessoaId));
         BigDecimal valorTotal = BigDecimal.ZERO;
 
         for (int i = 1; i <= 12; i++) {

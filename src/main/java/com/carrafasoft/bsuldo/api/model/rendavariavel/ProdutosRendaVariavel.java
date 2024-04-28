@@ -1,12 +1,18 @@
 package com.carrafasoft.bsuldo.api.model.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.model.Emissores;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "produtos_renda_variavel")
 public class ProdutosRendaVariavel {
@@ -65,132 +71,12 @@ public class ProdutosRendaVariavel {
     @JoinColumn(name = "setor_id")
     private Setores setor;
 
-    public Long getProdutoId() {
-        return produtoId;
-    }
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "pessoa_id")
+    private Pessoas pessoa;
 
-    public void setProdutoId(Long produtoId) {
-        this.produtoId = produtoId;
-    }
 
-    public String getLongName() {
-        return longName;
-    }
-
-    public void setLongName(String longName) {
-        this.longName = longName;
-    }
-
-    public String getShortName() {
-        return shortName;
-    }
-
-    public void setShortName(String shortName) {
-        this.shortName = shortName;
-    }
-
-    public String getTicker() {
-        return ticker;
-    }
-
-    public void setTicker(String ticker) {
-        this.ticker = ticker;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public Boolean getGeraDividendos() {
-        return geraDividendos;
-    }
-
-    public void setGeraDividendos(Boolean geraDividendos) {
-        this.geraDividendos = geraDividendos;
-    }
-
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
-    public Long getCotasEmitidas() {
-        return cotasEmitidas;
-    }
-
-    public void setCotasEmitidas(Long cotasEmitidas) {
-        this.cotasEmitidas = cotasEmitidas;
-    }
-
-    public String getLogoUrl() {
-        return logoUrl;
-    }
-
-    public void setLogoUrl(String logoUrl) {
-        this.logoUrl = logoUrl;
-    }
-
-    public String getDescricao() {
-        return descricao;
-    }
-
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-
-    public Emissores getEmissor() {
-        return emissor;
-    }
-
-    public void setEmissor(Emissores emissor) {
-        this.emissor = emissor;
-    }
-
-    public Segmentos getSegmento() {
-        return segmento;
-    }
-
-    public void setSegmento(Segmentos segmento) {
-        this.segmento = segmento;
-    }
-
-    public Setores getSetor() {
-        return setor;
-    }
-
-    public void setSetor(Setores setor) {
-        this.setor = setor;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ProdutosRendaVariavel that = (ProdutosRendaVariavel) o;
-
-        return Objects.equals(produtoId, that.produtoId);
-    }
-
-    @Override
-    public int hashCode() {
-        return produtoId != null ? produtoId.hashCode() : 0;
-    }
 
     @PrePersist
     public void aoCadastrar() {

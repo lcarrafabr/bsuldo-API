@@ -3,12 +3,17 @@ package com.carrafasoft.bsuldo.api.model.rendavariavel;
 import com.carrafasoft.bsuldo.api.enums.TipoOrdemRendaVariavelEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoAtivoEnum;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "ordens_de_compra")
 public class OrdensDeCompra {
@@ -47,7 +52,13 @@ public class OrdensDeCompra {
     @Column(name = "valor_investido")
     private BigDecimal valorInvestido;
 
-    @NotNull
+    @Column(name = "desdobro_agrupado")
+    private String desdobroAgrupado;
+
+    @Column(name = "data_desdobro_agrupamento")
+    private LocalDate dataDesdobroAgrupamento;
+
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "pessoa_id")
     private Pessoas pessoa;
@@ -57,95 +68,111 @@ public class OrdensDeCompra {
     @JoinColumn(name = "produto_id")
     private ProdutosRendaVariavel produtoRendaVariavel;
 
-    public Long getOrdemDeCompraId() {
-        return ordemDeCompraId;
-    }
-
-    public void setOrdemDeCompraId(Long ordemDeCompraId) {
-        this.ordemDeCompraId = ordemDeCompraId;
-    }
-
-    public TipoAtivoEnum getTipoProdutoEnum() {
-        return tipoAtivoEnum;
-    }
-
-    public void setTipoProdutoEnum(TipoAtivoEnum tipoAtivoEnum) {
-        this.tipoAtivoEnum = tipoAtivoEnum;
-    }
-
-    public TipoOrdemRendaVariavelEnum getTipoOrdemRendaVariavelEnum() {
-        return tipoOrdemRendaVariavelEnum;
-    }
-
-    public void setTipoOrdemRendaVariavelEnum(TipoOrdemRendaVariavelEnum tipoOrdemRendaVariavelEnum) {
-        this.tipoOrdemRendaVariavelEnum = tipoOrdemRendaVariavelEnum;
-    }
-
-    public LocalDate getDataTransacao() {
-        return dataTransacao;
-    }
-
-    public void setDataTransacao(LocalDate dataTransacao) {
-        this.dataTransacao = dataTransacao;
-    }
-
-    public LocalDate getDataExecucao() {
-        return dataExecucao;
-    }
-
-    public void setDataExecucao(LocalDate dataExecucao) {
-        this.dataExecucao = dataExecucao;
-    }
-
-    public Long getQuantidadeCotas() {
-        return quantidadeCotas;
-    }
-
-    public void setQuantidadeCotas(Long quantidadeCotas) {
-        this.quantidadeCotas = quantidadeCotas;
-    }
-
-    public BigDecimal getPrecoUnitarioCota() {
-        return precoUnitarioCota;
-    }
-
-    public void setPrecoUnitarioCota(BigDecimal precoUnitarioCota) {
-        this.precoUnitarioCota = precoUnitarioCota;
-    }
-
-    public BigDecimal getValorInvestido() {
-        return valorInvestido;
-    }
-
-    public void setValorInvestido(BigDecimal valorInvestido) {
-        this.valorInvestido = valorInvestido;
-    }
-
-    public Pessoas getPessoa() {
-        return pessoa;
-    }
-
-    public void setPessoa(Pessoas pessoa) {
-        this.pessoa = pessoa;
-    }
-
-    public ProdutosRendaVariavel getProdutoRendaVariavel() {
-        return produtoRendaVariavel;
-    }
-
-    public void setProdutoRendaVariavel(ProdutosRendaVariavel produtoRendaVariavel) {
-        this.produtoRendaVariavel = produtoRendaVariavel;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        OrdensDeCompra that = (OrdensDeCompra) o;
-
-        return ordemDeCompraId.equals(that.ordemDeCompraId);
-    }
+//    public Long getOrdemDeCompraId() {
+//        return ordemDeCompraId;
+//    }
+//
+//    public void setOrdemDeCompraId(Long ordemDeCompraId) {
+//        this.ordemDeCompraId = ordemDeCompraId;
+//    }
+//
+//    public TipoAtivoEnum getTipoProdutoEnum() {
+//        return tipoAtivoEnum;
+//    }
+//
+//    public void setTipoProdutoEnum(TipoAtivoEnum tipoAtivoEnum) {
+//        this.tipoAtivoEnum = tipoAtivoEnum;
+//    }
+//
+//    public TipoOrdemRendaVariavelEnum getTipoOrdemRendaVariavelEnum() {
+//        return tipoOrdemRendaVariavelEnum;
+//    }
+//
+//    public void setTipoOrdemRendaVariavelEnum(TipoOrdemRendaVariavelEnum tipoOrdemRendaVariavelEnum) {
+//        this.tipoOrdemRendaVariavelEnum = tipoOrdemRendaVariavelEnum;
+//    }
+//
+//    public LocalDate getDataTransacao() {
+//        return dataTransacao;
+//    }
+//
+//    public void setDataTransacao(LocalDate dataTransacao) {
+//        this.dataTransacao = dataTransacao;
+//    }
+//
+//    public LocalDate getDataExecucao() {
+//        return dataExecucao;
+//    }
+//
+//    public void setDataExecucao(LocalDate dataExecucao) {
+//        this.dataExecucao = dataExecucao;
+//    }
+//
+//    public Long getQuantidadeCotas() {
+//        return quantidadeCotas;
+//    }
+//
+//    public void setQuantidadeCotas(Long quantidadeCotas) {
+//        this.quantidadeCotas = quantidadeCotas;
+//    }
+//
+//    public BigDecimal getPrecoUnitarioCota() {
+//        return precoUnitarioCota;
+//    }
+//
+//    public void setPrecoUnitarioCota(BigDecimal precoUnitarioCota) {
+//        this.precoUnitarioCota = precoUnitarioCota;
+//    }
+//
+//    public BigDecimal getValorInvestido() {
+//        return valorInvestido;
+//    }
+//
+//    public void setValorInvestido(BigDecimal valorInvestido) {
+//        this.valorInvestido = valorInvestido;
+//    }
+//
+//    public Pessoas getPessoa() {
+//        return pessoa;
+//    }
+//
+//    public void setPessoa(Pessoas pessoa) {
+//        this.pessoa = pessoa;
+//    }
+//
+//    public ProdutosRendaVariavel getProdutoRendaVariavel() {
+//        return produtoRendaVariavel;
+//    }
+//
+//    public void setProdutoRendaVariavel(ProdutosRendaVariavel produtoRendaVariavel) {
+//        this.produtoRendaVariavel = produtoRendaVariavel;
+//    }
+//
+//    public String getDesdobroAgrupado() {
+//        return desdobroAgrupado;
+//    }
+//
+//    public void setDesdobroAgrupado(String desdobroAgrupado) {
+//        this.desdobroAgrupado = desdobroAgrupado;
+//    }
+//
+//    public LocalDate getDataDesdobroAgrupamento() {
+//        return dataDesdobroAgrupamento;
+//    }
+//
+//    public void setDataDesdobroAgrupamento(LocalDate dataDesdobroAgrupamento) {
+//        this.dataDesdobroAgrupamento = dataDesdobroAgrupamento;
+//    }
+//
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        OrdensDeCompra that = (OrdensDeCompra) o;
+//
+//        return ordemDeCompraId.equals(that.ordemDeCompraId);
+//    }
 
     @Override
     public int hashCode() {

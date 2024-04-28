@@ -2,6 +2,7 @@ package com.carrafasoft.bsuldo.api.service;
 
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.model.Emissores;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.repository.EmissoresRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,14 @@ public class EmissoresService {
     @Autowired
     private ApplicationEventPublisher publisher;
 
-    public ResponseEntity<Emissores> cadastrarEmissor(Emissores emissores, HttpServletResponse response) {
+    @Autowired
+    private PessoaService pessoaService;
+
+    public ResponseEntity<Emissores> cadastrarEmissor(Emissores emissores, HttpServletResponse response, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+        emissores.setPessoa(pessoaSalva);
 
         Emissores emissorSalvo = repository.save(emissores);
         publisher.publishEvent(new RecursoCriadoEvent(this, response, emissorSalvo.getEmissorId()));
@@ -31,7 +39,11 @@ public class EmissoresService {
         return ResponseEntity.status(HttpStatus.CREATED).body(emissorSalvo);
     }
 
-    public Emissores atualizaEmissor(Long codigo, Emissores emissores) {
+    public Emissores atualizaEmissor(Long codigo, Emissores emissores, String tokenId) {
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+        emissores.setPessoa(pessoaSalva);
 
         Emissores emissorSalvo = buscaPorId(codigo);
         BeanUtils.copyProperties(emissores, emissorSalvo, "emissorId");
@@ -45,8 +57,8 @@ public class EmissoresService {
         repository.save(emissorSalvo);
     }
 
-    public List<Emissores> buscaEmissorPorNome(String nomeEmissor) {
-        return repository.buscaPorNomeEmissor(nomeEmissor);
+    public List<Emissores> buscaEmissorPorNome(String nomeEmissor, String tokenId) {
+        return repository.buscaPorNomeEmissor(nomeEmissor, pessoaService.recuperaIdPessoaByToken(tokenId));
     }
 
     public Emissores cadastrarEmissorAutomatico(Emissores emissores, HttpServletResponse response) {

@@ -23,7 +23,7 @@ public class Bancos {
 
     private Boolean status;
 
-    //@NotNull
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "pessoa_id")
     private Pessoas pessoa;

@@ -6,14 +6,27 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SetoresRepository extends JpaRepository<Setores, Long> {
 
     @Query(nativeQuery = true,
+    value = "select * from setores " +
+            "where pessoa_id = :pessoaId ")
+    List<Setores> findAllByPessoaId(Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "select * from setores " +
+            "where setor_id = :codigo " +
+            "and pessoa_id = :pessoaId ")
+    Optional<Setores> findByIdAndPessoaId(Long codigo, Long pessoaId);
+
+    @Query(nativeQuery = true,
             value = "select * from setores "
-                    + "where nome_setor LIKE %:nomeSetor% ")
-    public Setores buscaPorNomeCategoria(String nomeSetor);
+                    + "where nome_setor LIKE %:nomeSetor% " +
+                    "and pessoa_id = :pessoaId ")
+    public Setores buscaPorNomeCategoria(String nomeSetor, Long pessoaId);
 
 
     @Query(nativeQuery = true,
@@ -22,6 +35,7 @@ public interface SetoresRepository extends JpaRepository<Setores, Long> {
     public List<Setores> buscaPorNomeSetor(String nomeSetor);
 
     @Query(nativeQuery = true,
-            value = "select * from setores where status = 1")
-    public List<Setores> buscaSetorAtivo();
+            value = "select * from setores where status = 1 " +
+                    "and pessoa_id = :pessoaId ")
+    public List<Setores> buscaSetorAtivo(Long pessoaId);
 }

@@ -1,5 +1,9 @@
 package com.carrafasoft.bsuldo.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
@@ -7,6 +11,8 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Objects;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "emissores")
 public class Emissores {
@@ -27,51 +33,10 @@ public class Emissores {
     @Column(name = "data_cadastro")
     private LocalDate dataCadastro;
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Emissores)) return false;
-        Emissores emissores = (Emissores) o;
-        return Objects.equals(emissorId, emissores.emissorId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(emissorId);
-    }
-
-    public Long getEmissorId() {
-        return emissorId;
-    }
-
-    public void setEmissorId(Long emissorId) {
-        this.emissorId = emissorId;
-    }
-
-    public String getNomeEmissor() {
-        return nomeEmissor;
-    }
-
-    public void setNomeEmissor(String nomeEmissor) {
-        this.nomeEmissor = nomeEmissor;
-    }
-
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
-    public LocalDate getDataCadastro() {
-        return dataCadastro;
-    }
-
-    public void setDataCadastro(LocalDate dataCadastro) {
-        this.dataCadastro = dataCadastro;
-    }
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "pessoa_id")
+    private Pessoas pessoa;
 
     @PrePersist
     public void aoCadastrar() {

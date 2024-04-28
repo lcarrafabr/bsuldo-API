@@ -54,8 +54,12 @@ public class CoresConfigService {
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, corSalva.getCoresConfigId()));
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(corSalva);
-		
-			
+	}
+
+	public void atualizaUsarCoresPadrao(Long pessoaId, Boolean usarCoresPadrao) {
+
+		configRepository.atualizaCoresPadrao(pessoaId, usarCoresPadrao);
+
 	}
 	
 	private Pessoas buscaPessoaId(Long codigo) {

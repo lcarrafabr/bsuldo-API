@@ -9,12 +9,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.carrafasoft.bsuldo.api.model.CoresConfig;
 import com.carrafasoft.bsuldo.api.repository.CoresConfigRepository;
@@ -37,7 +32,7 @@ public class CoresConfigResource {
 	}
 	
 	@GetMapping("/cores-graficos/{pessoaId}")
-	public HashMap<String, Object> listarCoresParaGraficos(@PathVariable Long pessoaId) {
+	public HashMap<String, Object> listarCoresParaGraficos(@RequestParam("pessoaId") Long pessoaId) {
 				
 		return coresConfigService.listaCoresParaGraficos(pessoaId);
 	}
@@ -53,6 +48,12 @@ public class CoresConfigResource {
 	public ResponseEntity<CoresConfig> cadastrarCores(@Valid @RequestBody CoresConfig coresConfig, HttpServletResponse response) {
 		
 		return coresConfigService.salvarCores(coresConfig, response);
+	}
+
+	@PutMapping("/atualiza-cor-padrao")
+	public void atualizaCoresPadrao(@RequestParam("pessoaId") Long pessoaId, @Valid @RequestBody Boolean usarCorPadrao) {
+
+		coresConfigService.atualizaUsarCoresPadrao(pessoaId, usarCorPadrao);
 	}
 	
 	

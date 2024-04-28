@@ -2,9 +2,11 @@ package com.carrafasoft.bsuldo.api.resource.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.model.rendavariavel.ControleDividendos;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.ControleDividendosCadastroCombobox;
+import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.GraficoDividendosRecebidosPorMesEAno;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.TotalDivDisponivelDTO;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.TotalDivRecebidoDTO;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.ControleDividendosRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.rendavariavel.ControleDividendosService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -29,11 +31,15 @@ public class ControleDividendosResource {
     @Autowired
     private ControleDividendosService service;
 
+    @Autowired
+    private PessoaService pessoaService;
+
 
     @GetMapping
-    public List<ControleDividendos> findAll() {
+    public List<ControleDividendos> findAll(@RequestParam("tokenId") String tokenId) {
 
-        return repository.findAll(Sort.by(Sort.Direction.DESC, "controleDividendoId"));
+        //return repository.findAll(Sort.by(Sort.Direction.DESC, "controleDividendoId"));
+        return repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
     }
 
     @PostMapping
@@ -87,24 +93,33 @@ public class ControleDividendosResource {
     //******************************************************************************************************************
 
     @GetMapping("/valor-total-div-recebido")
-    public TotalDivRecebidoDTO valorTotalDivsRecebidos() {
+    public TotalDivRecebidoDTO valorTotalDivsRecebidos(@RequestParam("idToken") String idToken) {
 
         TotalDivRecebidoDTO totalDiv = new TotalDivRecebidoDTO();
 
-        BigDecimal valor = repository.valorTotalDivRecebido();
+        BigDecimal valor = repository.valorTotalDivRecebido(pessoaService.recuperaIdPessoaByToken(idToken));
         totalDiv.setTotalDivRecebido(valor);
 
         return totalDiv;
     }
 
     @GetMapping("/valor-total-div-disponivel")
-    public TotalDivDisponivelDTO valorTotalDivDisponivel() {
+    public TotalDivDisponivelDTO valorTotalDivDisponivel(@RequestParam("tokenId") String tokenId) {
 
         TotalDivDisponivelDTO totalDivDisp = new TotalDivDisponivelDTO();
 
-        BigDecimal valorDisp = repository.valorTotalDivDisponivel();
+        BigDecimal valorDisp = repository.valorTotalDivDisponivel(pessoaService.recuperaIdPessoaByToken(tokenId));
         totalDivDisp.setTotalDivDisponivel(valorDisp);
 
         return totalDivDisp;
+    }
+
+    @GetMapping("/dados-dividendos-por-mes-e-ano")
+    public List<GraficoDividendosRecebidosPorMesEAno> getDadosGraficoDivMesEAno(@RequestParam("idToken") String idToken,
+                                                                                @RequestParam("ano") String ano,
+                                                                                @RequestParam("mes") String mes) {
+
+        return service.getDadosGraficoDividendosPorMesEAno(ano,
+                mes, pessoaService.recuperaIdPessoaByToken(idToken));
     }
 }

@@ -5,7 +5,9 @@ import java.text.DecimalFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.UUID;
 
 import com.carrafasoft.bsuldo.api.enums.DiasDaSemanaEnum;
@@ -55,6 +57,14 @@ public class FuncoesUtils {
 		String myRandom = uuid.toString();
 		//System.out.println(myRandom.substring(0,20));
 		return myRandom.substring(0,20);
+	}
+
+
+	public static String gerarUUID() {
+
+		UUID uuid = UUID.randomUUID();
+		String uuidGerado = uuid.toString();
+		return uuidGerado;
 	}
 	
 	public static String getZeroEsq(Long codigo,int quant) throws ParseException, java.text.ParseException{
@@ -158,4 +168,58 @@ public class FuncoesUtils {
 		return diaDaSemanaRetorno;
 	}
 
+	public static String converteVazioParaNulo(String valor) {
+
+		String retorno = null;
+
+		if(!valor.equals("")) {
+			retorno = valor;
+		}
+		return retorno;
+	}
+
+	// Método para criptografar uma string para Base64
+	public static String encryptToBase64(String originalString) {
+		byte[] encodedBytes = Base64.getEncoder().encode(originalString.getBytes());
+		return new String(encodedBytes);
+	}
+
+	// Método para descriptografar uma string de Base64 para a string original
+	public static String decryptFromBase64(String encryptedString) {
+		try {
+			byte[] decodedBytes = Base64.getDecoder().decode(encryptedString);
+			return new String(decodedBytes);
+		} catch (IllegalArgumentException e) {
+			//System.out.println("Erro ao decodificar a string Base64: " + e.getMessage());
+			return null;
+		}
+	}
+
+	//Verifica se é fim de semana
+	public static Boolean fimDeSemanaChecker () {
+
+		LocalDate today = LocalDate.now();
+		Boolean fimDeSemana = false;
+
+		// Verificar se é sábado ou domingo
+		if (today.getDayOfWeek() == DayOfWeek.SATURDAY || today.getDayOfWeek() == DayOfWeek.SUNDAY) {
+			fimDeSemana = true;
+		}
+		return fimDeSemana;
+	}
+
+	// Método para verificar se o horário está entre abertura e fim do horario de funcionamento B3
+	//true para qualquer horário entre 10:00 e 18:00 (inclusive). OU DADOS DO PARAMETRO
+	//false para qualquer horário antes de 10:00 ou depois de 18:00. OU DADOS DO PARAMETRO
+	public static boolean estaNoIntervalo(LocalTime horario, String horarioInicio, String horarioFim) {
+
+		LocalTime inicio = LocalTime.parse(horarioInicio);
+		LocalTime fim = LocalTime.parse(horarioFim);
+
+		return !horario.isBefore(inicio) && !horario.isAfter(fim);
+	}
+
+
 }
+
+
