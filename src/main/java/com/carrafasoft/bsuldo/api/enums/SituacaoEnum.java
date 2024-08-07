@@ -5,6 +5,8 @@ public enum SituacaoEnum {
 	PENDENTE,
 	PAGO,
 	VENCIDO,
-	CANCELADO
+	CANCELADO,
+	RECEBIDO,
+	ATRASADO
 
 }

@@ -13,6 +13,11 @@ import javax.transaction.Transactional;
 
 @Repository
 public interface CoresConfigRepository extends JpaRepository<CoresConfig, Long>{
+
+	@Query(nativeQuery = true,
+	value = "select *  " +
+			"from cores_config where pessoa_id = :pessoaId ")
+	List<CoresConfig> listarTodosByPessoaId(Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select cor_principal from cores_config where pessoa_id = :pessoaId ")

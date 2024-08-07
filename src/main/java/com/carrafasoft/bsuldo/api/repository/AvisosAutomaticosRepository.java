@@ -33,7 +33,7 @@ public interface AvisosAutomaticosRepository extends JpaRepository<AvisosAutomat
 
     @Query(nativeQuery = true,
     value = "SELECT count(*) as qtd FROM avisos_automaticos  " +
-            "WHERE data_cadastro < CURRENT_DATE() - INTERVAL 30 DAY  " +
+            "WHERE data_cadastro < CURRENT_DATE() - INTERVAL 60 DAY  " +
             "AND visualizado = 1 ")
     Long verificaSeTemAVisosParaRemover();
 
@@ -41,7 +41,7 @@ public interface AvisosAutomaticosRepository extends JpaRepository<AvisosAutomat
     @Modifying
     @Query(nativeQuery = true,
     value = "delete from avisos_automaticos " +
-            "WHERE data_cadastro < CURRENT_DATE() - INTERVAL 30 DAY  " +
+            "WHERE data_cadastro < CURRENT_DATE() - INTERVAL 60 DAY  " +
             "AND visualizado = 1 ")
     void removerAvisosAutomaticosMaior30Dias();
 }

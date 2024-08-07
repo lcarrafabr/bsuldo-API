@@ -14,6 +14,7 @@ import com.carrafasoft.bsuldo.api.enums.DiasDaSemanaEnum;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sun.el.parser.ParseException;
+import org.springframework.util.StringUtils;
 
 public class FuncoesUtils {
 	
@@ -37,9 +38,13 @@ public class FuncoesUtils {
 	 @param LocalDate data
 	  **/
 	public static LocalDate converterStringParaLocalDate(String data) {
-		
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		LocalDate dateTime = LocalDate.parse(data, formatter);
+
+		LocalDate dateTime = null;
+
+		if(StringUtils.hasLength(data)) {
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+			dateTime = LocalDate.parse(data, formatter);
+		}
 		
 		return dateTime;
 	}

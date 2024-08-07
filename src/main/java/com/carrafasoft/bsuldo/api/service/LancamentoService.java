@@ -1,17 +1,21 @@
 package com.carrafasoft.bsuldo.api.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.MonthDay;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
+import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
+import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.mail.Mailer;
+import com.carrafasoft.bsuldo.api.model.Bancos;
+import com.carrafasoft.bsuldo.api.model.Lancamentos;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.model.Usuarios;
+import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
+import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
+import com.carrafasoft.bsuldo.api.repository.BancoRepository;
+import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
+import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
+import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,25 +24,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
-import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
-import com.carrafasoft.bsuldo.api.mail.Mailer;
-import com.carrafasoft.bsuldo.api.model.Lancamentos;
-import com.carrafasoft.bsuldo.api.model.Usuarios;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
-import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
-import com.carrafasoft.bsuldo.api.repository.PessoaRepository;
-import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
-import com.carrafasoft.bsuldo.api.resource.CategoriaResource;
-import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+@Slf4j
 @Service
 public class LancamentoService {
-	
-	private static final Logger logger = LoggerFactory.getLogger(Lancamentos.class);
 
 	@Autowired
 	private LancamentoRepository lancamentoRepository;
@@ -48,6 +45,12 @@ public class LancamentoService {
 
 	@Autowired
 	private ApplicationEventPublisher publisher;
+
+	@Autowired
+	private PessoaService pessoaService;
+
+	@Autowired
+	private BancoRepository bancoRepository;
 	
 	@Autowired
 	private Mailer mailer;
@@ -56,9 +59,14 @@ public class LancamentoService {
 	@Scheduled(cron = "0 0 0 * * *")
 	public void atualizarStatusLancamentoVencidos() {
 		
-		logger.info("*********** Atualizado a situação de todos os lancamentos vencidos **************");
-		
+		log.info("...: Atualizado a situação de todos os lancamentos vencidos :...");
+		log.info("...: Verificando lançamentos DESPESA :...");
 		lancamentoRepository.atualizaLancamentosVencidos();
+
+		log.info("...: Verificando lançamentos RECEITA :...");
+		lancamentoRepository.atualizaLancamentosRecebimentoVencidos();
+
+		log.info("...: Fim da verificação automática :...");
 		
 	}
 
@@ -66,7 +74,7 @@ public class LancamentoService {
 	@Scheduled(cron = "0 5 0 * * *")
 	public void enviarEmailLancamentosVencidos() {
 		
-		logger.info("*********** Verificando se existe lancamentos vencidos para enviar por e-mail **************");
+		log.info("*********** Verificando se existe lancamentos vencidos para enviar por e-mail **************");
 		
 		enviarLancamentosVencidosByEmail();
 		
@@ -76,17 +84,28 @@ public class LancamentoService {
 	@Scheduled(cron = "0 2 0 * * *")
 	public void enviarEmailLancamentosPendVencProximosSeteDias() {
 		
-		logger.info("*********** Verificando se existe lancamentos pendentes ou vencidos nos próximos 7 dias para enviar por e-mail **************");
+		log.info("*********** Verificando se existe lancamentos pendentes ou vencidos nos próximos 7 dias para enviar por e-mail **************");
 		
 		enviarLancamentosPendentesVencidosByEmail();
 		
 	}
 
-	public ResponseEntity<?> cadastrarLancamentoSemParcelamento(Lancamentos lancamento, HttpServletResponse response) {
+	public ResponseEntity<?> cadastrarLancamentoSemParcelamento(Lancamentos lancamento, HttpServletResponse response, String tokenId) {
 
 		ResponseEntity<Lancamentos> httpStatus = new ResponseEntity<Lancamentos>(HttpStatus.METHOD_NOT_ALLOWED);
 		String chavePesquisa = gerarChavePesquisa();
 		lancamento.setChavePesquisa(chavePesquisa);
+
+		Bancos banco = lancamento.getBanco();
+		if (banco != null) {
+			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+				// Se o banco é inválido, definir banco como null
+				lancamento.setBanco(null);
+			}
+		}
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		lancamento.setPessoa(pessoaSalva);
 
 		Lancamentos lancamentoSalvo = lancamentoRepository.save(lancamento);
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getLancamentoId()));
@@ -96,11 +115,23 @@ public class LancamentoService {
 		return httpStatus;
 	}
 
-	public ResponseEntity<?> cadastrarLancamentoComParcelamento(Lancamentos lancamento, HttpServletResponse response) {
+	public ResponseEntity<?> cadastrarLancamentoComParcelamento(Lancamentos lancamento, HttpServletResponse response,
+																String tokenId) {
 
 		ResponseEntity<Lancamentos> httpStatus = new ResponseEntity<Lancamentos>(HttpStatus.METHOD_NOT_ALLOWED);
 		String chavePesquisa = gerarChavePesquisa();
 		lancamento.setChavePesquisa(chavePesquisa);
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		lancamento.setPessoa(pessoaSalva);
+
+		Bancos banco = lancamento.getBanco();
+		if (banco != null) {
+			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+				// Se o banco é inválido, definir banco como null
+				lancamento.setBanco(null);
+			}
+		}
 
 		Integer qtdParcelas = lancamento.getQuantidadeParcelas();
 		LocalDate dataPrimeiroVencimento = lancamento.getDatavencimento();
@@ -154,7 +185,8 @@ public class LancamentoService {
 			preparaSalvar.setPessoa(lancamento.getPessoa());
 			preparaSalvar.setChavePesquisa(chavePesquisa);
 			preparaSalvar.setLancRecorrente(lancamento.getLancRecorrente());
-			// preparaSalvar.setSituacao(SituacaoEnum.PENDENTE);
+			preparaSalvar.setTipoLancamento(lancamento.getTipoLancamento());
+			//preparaSalvar.setSituacao(situacaoRecebida);
 
 			lancamentoSalvo2 = lancamentoRepository.save(preparaSalvar);
 
@@ -166,11 +198,22 @@ public class LancamentoService {
 		return httpStatus;
 	}
 	
-	public Lancamentos atualizaLancamentoIdividual(Long codigo, Lancamentos lancamento) {
+	public Lancamentos atualizaLancamentoIdividual(Long codigo, Lancamentos lancamento, String tokenId) {
 		
 		LocalDate existDataPagamento = lancamento.getDataPagamento();
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		lancamento.setPessoa(pessoaSalva);
+
+		Bancos banco = lancamento.getBanco();
+		if (banco != null) {
+			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+				// Se o banco é inválido, definir banco como null
+				lancamento.setBanco(null);
+			}
+		}
 		
-		if(existDataPagamento != null) {
+		if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.DESPESA) {
 			
 			lancamento.setSituacao(SituacaoEnum.PAGO);
 		
@@ -178,8 +221,10 @@ public class LancamentoService {
 			
 			lancamento.setSituacao(SituacaoEnum.VENCIDO);
 			
+		} else if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.RECEITA) {
+			lancamento.setSituacao(SituacaoEnum.RECEBIDO);
 		} else {
-			
+
 			lancamento.setSituacao(SituacaoEnum.PENDENTE);
 		}
 		
@@ -295,9 +340,6 @@ public class LancamentoService {
 					id02 ++;
 				}
 				
-				
-				
-				
 			}
 			
 			totalmetodo.setId(id01);
@@ -306,16 +348,27 @@ public class LancamentoService {
 			totalmetodo.setTotais(totalMetodoCobrancaMes.get(i).getTotais());
 			
 			listFinal.add(totalmetodo);
-			
-			
-			
 		}	
 		
 		return listFinal;
 	}
 	
 	
-	public ResponseEntity<Lancamentos> gerarLancamentoRecorrente(@Valid Lancamentos lancamentos, HttpServletResponse response, String qtdDias) {
+	public ResponseEntity<Lancamentos> gerarLancamentoRecorrente(@Valid Lancamentos lancamentos, HttpServletResponse response,
+																 String qtdDias, String tokenId) {
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		lancamentos.setPessoa(pessoaSalva);
+
+		log.info("...: Iniciando lançamento recorrente para o usuárioID: {} :...", pessoaSalva.getPessoaID());
+
+		Bancos banco = lancamentos.getBanco();
+		if (banco != null) {
+			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+				// Se o banco é inválido, definir banco como null
+				lancamentos.setBanco(null);
+			}
+		}
 		
 		Boolean lancRecorrente = lancamentos.getLancRecorrente();
 		int qtdDiasRecorrente = 1;
@@ -360,19 +413,68 @@ public class LancamentoService {
 				preparaSalvar.setPessoa(lancamentos.getPessoa());
 				preparaSalvar.setChavePesquisa(chavePesquisa);
 				preparaSalvar.setLancRecorrente(lancRecorrente);
+				preparaSalvar.setTipoLancamento(lancamentos.getTipoLancamento());
 				
 				lancamentoRepository.save(preparaSalvar);
 				
 			}
 		}
-		
-		
-		
-
+		log.info("...: Lançamento recorrente cadastrado com sucesso. :...");
 		return ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo);
-		
-		 				
-		
+	}
+
+	public List<Lancamentos> findByNewFilters(String tokenId, String descricao, String dataVencimento,
+											  String dataVencimentoFim, String metodoDeCobrancaId, String chavePesquisa, String situacao,
+											  String tipoLancamento) {
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+		LocalDate dataVenc = null;
+		LocalDate dataIni = null;
+		LocalDate dataFim = null;
+
+		if(!StringUtils.hasLength(dataVencimento)) {
+			dataVenc = FuncoesUtils.converterStringParaLocalDate(dataVencimento);
+		}
+
+		if(StringUtils.hasLength(dataVencimentoFim)) {
+
+			dataIni = FuncoesUtils.converterStringParaLocalDate(dataVencimento);
+			dataFim = FuncoesUtils.converterStringParaLocalDate(dataVencimentoFim);
+			dataVencimento = null;
+		} else {
+			dataVenc = FuncoesUtils.converterStringParaLocalDate(dataVencimento);
+		}
+
+		if(!StringUtils.hasLength(descricao)) {
+			descricao = null;
+		}
+
+		if(!StringUtils.hasLength(metodoDeCobrancaId)) {
+			metodoDeCobrancaId = null;
+		}
+
+		if(!StringUtils.hasLength(situacao)) {
+			situacao = null;
+		}
+
+		if(!StringUtils.hasLength(tipoLancamento)) {
+			tipoLancamento = null;
+		}
+
+		if(!StringUtils.hasLength(chavePesquisa)) {
+			chavePesquisa = null;
+		}
+
+		return lancamentoRepository.findByAllDescNew(
+				descricao,
+				dataVenc,
+				dataIni,
+				dataFim,
+				metodoDeCobrancaId,
+				situacao,
+				chavePesquisa,
+				tipoLancamento,
+				pessoaId);
 	}
 
 	private String gerarChavePesquisa() {
@@ -390,9 +492,9 @@ public class LancamentoService {
 	}
 	
 	private Lancamentos buscaPorId(Long codigo) {
-		
-		Lancamentos lancamentoSalvo = lancamentoRepository.findById(codigo).orElseThrow(()-> new EmptyResultDataAccessException(1));
-		return lancamentoSalvo;
+
+		return lancamentoRepository.findById(codigo).orElseThrow(()-> new EmptyResultDataAccessException(1));
+
 	}
 	
 	private void enviarLancamentosVencidosByEmail() {
@@ -405,15 +507,15 @@ public class LancamentoService {
 			
 			if(destinatarios.size() > 0) {
 				
-				logger.info("Enviando lançamentos vencidos por e-mail. Total de lançamentos vencidos: " + lancamentosVencidos.size());
+				log.info("Enviando lançamentos vencidos por e-mail. Total de lançamentos vencidos: " + lancamentosVencidos.size());
 				mailer.avisarLancamentosVencidos(lancamentosVencidos, destinatarios);
 				
 			} else {
-				logger.warn("Não tem emails cadastrados para enviar e-mail");
+				log.warn("...: Não existe emails cadastrados para enviar e-mail :...");
 			}
 		}else {
-			
-			logger.info("Não existe. lançamentos vencidos.");
+
+			log.info("...: Não existe. lançamentos vencidos. :...");
 		}
 	}
 	
@@ -427,17 +529,42 @@ public class LancamentoService {
 				List<Usuarios> destinatarios = usuarioRepository.getusuariosParaenviarEmail();
 				
 				if(destinatarios.size() > 0) {
-					
-					logger.info("Enviando lançamentos pendentes por e-mail. Total de lançamentos pendentes: " + lancamentosPendentes.size());
+
+					log.info("Enviando lançamentos pendentes por e-mail. Total de lançamentos pendentes: " + lancamentosPendentes.size());
 					mailer.avisarLancamentosPendentes(lancamentosPendentes, destinatarios);
 					
 				} else {
-					logger.warn("Não tem emails cadastrados para enviar e-mail");
+					log.warn("Não tem emails cadastrados para enviar e-mail");
 				}
 			}else {
-				
-				logger.info("Não existe. lançamentos pendentes nos proximos 7 dias");
+
+				log.info("Não existe. lançamentos pendentes nos proximos 7 dias");
 			}
 		}
 
+	private SituacaoEnum ajustaSituacao(Lancamentos lancamento) {
+
+		var dataPagamento = lancamento.getDataPagamento();
+		var tipolancamento = lancamento.getTipoLancamento();
+		Boolean bancoExist = false;
+		SituacaoEnum situacaoRetorno = null;
+
+		Bancos banco = lancamento.getBanco();
+		if (banco != null) {
+			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+				// Se o banco é inválido, definir banco como null
+				bancoExist = false;
+			} else {
+				bancoExist = true;
+			}
+		}
+
+		if(TipoLancamento.DESPESA.equals(lancamento.getTipoLancamento()) &&
+			dataPagamento != null) {
+
+			situacaoRetorno = SituacaoEnum.PAGO;
+		}
+
+		return situacaoRetorno;
+	}
 }

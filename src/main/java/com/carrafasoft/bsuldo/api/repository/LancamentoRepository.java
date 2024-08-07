@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
@@ -17,8 +18,32 @@ import com.carrafasoft.bsuldo.api.model.Lancamentos;
 public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 	
 	@Query(nativeQuery = true,
-			value = "select * from lancamentos order by lancamento_id desc ")
-	public List<Lancamentos> findByAllDesc();
+			value = "select * from lancamentos " +
+					"where pessoa_id = :pessoaId " +
+					"order by lancamento_id desc ")
+	public List<Lancamentos> findByAllDesc(Long pessoaId);
+
+
+	@Query(nativeQuery = true,
+	value = "SELECT * FROM lancamentos l " +
+			"WHERE (:descricao IS NULL OR UPPER(l.descricao) LIKE UPPER(CONCAT('%', :descricao, '%'))) " +
+			"AND (:dataVencimento IS NULL OR l.data_vencimento = :dataVencimento) " +
+			"AND (:dataIni IS NULL OR :dataVencimentoFim IS NULL OR l.data_vencimento BETWEEN :dataIni AND :dataVencimentoFim) " +
+			"AND (:metodoDeCobrancaId IS NULL OR l.metodo_de_cobranca_id = :metodoDeCobrancaId) " +
+			"AND (:situacao IS NULL OR l.situacao = :situacao) " +
+			"and (:chavePesquisa is null or l.chave_pesquisa = :chavePesquisa) " +
+			"and (:tipoLancamento is null or l.tipo_lancamento = :tipoLancamento) " +
+			"AND l.pessoa_id = :pessoaId " +
+			"ORDER BY l.lancamento_id DESC ")
+	public List<Lancamentos> findByAllDescNew(@Param("descricao") String descricao,
+											  @Param("dataVencimento") LocalDate dataVencimento,
+											  @Param("dataIni") LocalDate dataIni,
+											  @Param("dataVencimentoFim") LocalDate dataVencimentoFim,
+											  @Param("metodoDeCobrancaId") String metodoDeCobrancaId,
+											  @Param("situacao") String situacao,
+											  @Param("chavePesquisa") String chavePesquisa,
+											  @Param("tipoLancamento") String tipoLancamento,
+											  @Param("pessoaId") Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select * from lancamentos where chave_pesquisa = :chave ")
@@ -68,8 +93,19 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 			value = "update lancamentos "
 					+ "set situacao = 'VENCIDO' "
 					+ "where data_vencimento < CURRENT_DATE "
-					+ "and situacao = 'PENDENTE' ")
+					+ "and situacao = 'PENDENTE' " +
+					"and tipo_lancamento = 'DESPESA' ")
 	public void atualizaLancamentosVencidos();
+
+	@Transactional
+	@Modifying
+	@Query(nativeQuery = true,
+			value = "update lancamentos "
+					+ "set situacao = 'ATRASADO' "
+					+ "where data_vencimento < CURRENT_DATE "
+					+ "and situacao = 'PENDENTE' " +
+					"and tipo_lancamento = 'RECEITA' ")
+	public void atualizaLancamentosRecebimentoVencidos();
 	
 	@Query(nativeQuery = true,
 			value = "select sum(valor) as valor_a_pagar "
@@ -228,13 +264,13 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 	public List<String> lancamentosPorMetodoCobranca(int mes, int ano);
 	
 	@Query(nativeQuery = true,
-			value = "select * from lancamentos where situacao = 'VENCIDO' ")
+			value = "select * from lancamentos where situacao in('VENCIDO', 'ATRASADO') ")
 	public List<Lancamentos> getLancamentosVencidos();
 	
 	@Query(nativeQuery = true,
 			value = "select * from lancamentos "
 					+ "where data_vencimento between curdate() and curdate() + 7 "
-					+ "and situacao in ('PENDENTE', 'VENCIDO') ")
+					+ "and situacao in ('PENDENTE', 'VENCIDO', 'ATRASADO') ")
 	public List<Lancamentos> getLancamentosProximosSeteDias();
 
 }

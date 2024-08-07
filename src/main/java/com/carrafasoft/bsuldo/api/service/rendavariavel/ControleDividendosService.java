@@ -60,20 +60,31 @@ public class ControleDividendosService {
     //@Autowired
     private ControleDividendosSQL controleDividendosSQL;
 
-    public ControleDividendos cadastrarControleDividendo(ControleDividendos controleDividendos, HttpServletResponse response) {
+    public ControleDividendos cadastrarControleDividendo(ControleDividendos controleDividendos, HttpServletResponse response, String tokenId) {
 
         log.info("..: Iniciando o cadastro de dividendos :...");
+
+        String ticker = controleDividendos.getProdutosRendaVariavel().getTicker();
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        controleDividendos.setPessoa(pessoaSalva);
+
         ControleDividendos controleDivSalvo = repository.save(controleDividendos);
         publisher.publishEvent(new RecursoCriadoEvent(this, response, controleDivSalvo.getControleDividendoId()));
 
-        log.info("..: Cadastro realizado com sucesso :...: " + controleDivSalvo.getProdutosRendaVariavel().getTicker());
+        log.info("..: Cadastro realizado com sucesso: PessoaId: {}, ProdutoRVID: {} :...: ", pessoaSalva.getPessoaID(),
+                controleDivSalvo.getProdutosRendaVariavel().getProdutoId());
 
         return controleDivSalvo;
     }
 
-    public ControleDividendos atualizarControleDividendos(Long codigo, ControleDividendos controleDividendos) {
+    public ControleDividendos atualizarControleDividendos(Long codigo, ControleDividendos controleDividendos, String tokenId) {
 
         log.info("..: Iniciando atualização de dividendos :...");
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        controleDividendos.setPessoa(pessoaSalva);
+
         ControleDividendos controlDivSalvo = buscaPorId(codigo);
         BeanUtils.copyProperties(controleDividendos, controlDivSalvo, "controleDividendoId");
 
@@ -91,12 +102,14 @@ public class ControleDividendosService {
         log.info("...: Status atualizado: " + controleDivSalvo.getProdutosRendaVariavel().getTicker() + " ID = " + codigo + " = " + usado + " :...");
     }
 
-    public List<ControleDividendosCadastroCombobox> buscaControleDividendosCombobox() {
+    public List<ControleDividendosCadastroCombobox> buscaControleDividendosCombobox(String tokenId) {
+
+        Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 
 
         List<ControleDividendosCadastroCombobox> controleDivList = new ArrayList<>();
         List<OrdensDeCompra> ordemCompraAgrupada = new ArrayList<>();
-        ordemCompraAgrupada = ordemDeCompraRepository.buscaListaDeComprasAgrupadasPorProduto();
+        ordemCompraAgrupada = ordemDeCompraRepository.buscaListaDeComprasAgrupadasPorProduto(pessoaId);
 
         for (int i = 0; i < ordemCompraAgrupada.size(); i++) {
 
@@ -195,6 +208,8 @@ public class ControleDividendosService {
 
         return resultados;
     }
+
+
 
 
 }

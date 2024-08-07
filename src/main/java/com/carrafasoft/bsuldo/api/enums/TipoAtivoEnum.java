@@ -5,7 +5,7 @@ public enum TipoAtivoEnum {
     ACOES,
     FUNDO_DE_INVESTIMENTOS,
     FIIS,
-    BRDS,
+    BDRS,
     CRIPTOMOEDAS,
     ETFS,
     ETFS_INTERNACIONAIS,

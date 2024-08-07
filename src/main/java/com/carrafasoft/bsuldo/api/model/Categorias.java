@@ -1,16 +1,14 @@
 package com.carrafasoft.bsuldo.api.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
-
+@Getter
+@Setter
 
 @Entity
 @Table(name = "categorias")
@@ -25,43 +23,15 @@ public class Categorias {
 	@Column(name = "nome_categoria", length = 100)
 	private String nomeCategoria;
 
-	@NotNull
 	private Boolean status;
 
 	@Column(columnDefinition = "TEXT")
 	private String descricao;
 
-	public Long getCategoriaId() {
-		return categoriaId;
-	}
-
-	public void setCategoriaId(Long categoriaId) {
-		this.categoriaId = categoriaId;
-	}
-
-	public String getNomeCategoria() {
-		return nomeCategoria;
-	}
-
-	public void setNomeCategoria(String nomeCategoria) {
-		this.nomeCategoria = nomeCategoria;
-	}
-
-	public Boolean getStatus() {
-		return status;
-	}
-
-	public void setStatus(Boolean status) {
-		this.status = status;
-	}
-
-	public String getDescricao() {
-		return descricao;
-	}
-
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "pessoa_id")
+	private Pessoas pessoa;
 
 	@Override
 	public int hashCode() {
@@ -91,6 +61,7 @@ public class Categorias {
 	@PrePersist
 	public void aoCadastrar() {
 
+		status = true;
 		toUpperCase();
 	}
 

@@ -29,4 +29,10 @@ public interface BancoRepository extends JpaRepository<Bancos, Long> {
             "where banco_id = :bancoId " +
             "and pessoa_id = :pessoaId ")
     Optional<Bancos> findByIdAndPessoaId(Long pessoaId, Long bancoId);
+
+    @Query(nativeQuery = true,
+    value = "select * from bancos " +
+            "where pessoa_id = :pessoaId " +
+            "and status = 1 ")
+    List<Bancos> findByPessoaIDAndAtivos(Long pessoaId);
 }

@@ -1,39 +1,25 @@
 package com.carrafasoft.bsuldo.api.resource;
 
-import java.util.List;
-import java.util.Optional;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.model.Categorias;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.repository.CategoriaRepository;
+import com.carrafasoft.bsuldo.api.service.CategoriaService;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
-import com.carrafasoft.bsuldo.api.model.Categorias;
-import com.carrafasoft.bsuldo.api.repository.CategoriaRepository;
-import com.carrafasoft.bsuldo.api.service.CategoriaService;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/categorias")
 public class CategoriaResource {
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(CategoriaResource.class);
 	
 	@Autowired
 	private CategoriaRepository categoriaRepository;
@@ -43,17 +29,23 @@ public class CategoriaResource {
 	
 	@Autowired
 	private CategoriaService categoriaService;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	
 	@GetMapping
-	public List<Categorias> listarTodos() {
-		//LOGGER.info("******************** Listou categorias ************************");
+	public List<Categorias> listarTodos(@RequestParam("tokenId") String tokenId) {
 		
-		return categoriaRepository.findAll();
+		return categoriaRepository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
 	@PostMapping
-	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response) {
+	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response,
+														 @RequestParam("tokenId") String tokenId) {
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		categoria.setPessoa(pessoaSalva);
 		
 		Categorias categoriaSalva = categoriaRepository.save(categoria);
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
@@ -62,16 +54,21 @@ public class CategoriaResource {
 	}
 	
 	@GetMapping("/{codigo}")
-	public ResponseEntity<Categorias> buscaPorId(@PathVariable Long codigo) {
+	public ResponseEntity<Categorias> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
 		
-		Optional<Categorias> categoriaSalva = categoriaRepository.findById(codigo);
+		Optional<Categorias> categoriaSalva = categoriaRepository.findByIdAndPessoaId(codigo,
+				pessoaService.recuperaIdPessoaByToken(tokenId));
 		
 		return categoriaSalva.isPresent() ? ResponseEntity.ok(categoriaSalva.get()) : ResponseEntity.notFound().build();
 	}
 	
 	@PutMapping("/{codigo}")
-	public ResponseEntity<Categorias> atualizaCategoria(@PathVariable Long codigo, @Valid @RequestBody Categorias categoria) {
-		
+	public ResponseEntity<Categorias> atualizaCategoria(@PathVariable Long codigo, @Valid @RequestBody Categorias categoria,
+														@RequestParam("tokenId") String tokenId) {
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		categoria.setPessoa(pessoaSalva);
+
 		Categorias categoriaSalva = categoriaService.atualizaCategoria(codigo, categoria);
 		
 		return ResponseEntity.ok(categoriaSalva);
@@ -94,15 +91,16 @@ public class CategoriaResource {
 	/*******************************************************************************************************************************************************/
 	
 	@GetMapping("/busca-por-nome-categoria")
-	public List<Categorias> buscaPorNomeCategoria(@RequestParam("nomeCategoria") String nomeCategoria) {
+	public List<Categorias> buscaPorNomeCategoria(@RequestParam("nomeCategoria") String nomeCategoria,
+												  @RequestParam("tokenId") String tokenId) {
 		
-		return categoriaRepository.buscaPorNomeCategoria(nomeCategoria.trim());
+		return categoriaRepository.buscaPorNomeCategoria(nomeCategoria.trim(), pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
 	@GetMapping("/busca-categorias-ativas")
-	public List<Categorias> buscaCategoriasAtivas() {
+	public List<Categorias> buscaCategoriasAtivas(@RequestParam("tokenId") String tokenId) {
 		
-		return categoriaRepository.buscaCategoriasAtivas();
+		return categoriaRepository.buscaCategoriasAtivas(pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 
 }

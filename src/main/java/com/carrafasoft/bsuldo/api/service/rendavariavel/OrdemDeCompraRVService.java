@@ -1,12 +1,14 @@
 package com.carrafasoft.bsuldo.api.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.enums.TipoAtivoEnum;
+import com.carrafasoft.bsuldo.api.enums.TipoOrdemManualAutoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoOrdemRendaVariavelEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.OrdensDeCompra;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.*;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.OrdemDeCompraRepository;
+import com.carrafasoft.bsuldo.api.service.FeriadosService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.gerenciamentoapi.GerenciamentoProdutosListService;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
@@ -27,10 +29,10 @@ import javax.persistence.Query;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -48,6 +50,9 @@ public class OrdemDeCompraRVService {
     @Autowired
     private ApplicationEventPublisher publisher;
 
+    @Autowired
+    private FeriadosService feriadosService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -62,6 +67,10 @@ public class OrdemDeCompraRVService {
         PrecoAtualCota precoAtualCota = new PrecoAtualCota();
         try{
             precoAtualCota = ConsultarProdutoSimples.buscaPrecoAtualCota(ticker, apiToken);
+
+            if(precoAtualCota.getValorAtualCota() == null) {
+                precoAtualCota.setValorAtualCota(BigDecimal.ZERO);
+            }
 
             return precoAtualCota;
         } catch (Exception e) {
@@ -79,6 +88,7 @@ public class OrdemDeCompraRVService {
 
         Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
         ordemCompra.setPessoa(pessoaSalva);
+        ordemCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
 
         BigDecimal resultadoValorInvestido = calculaValorInvestido(ordemCompra);
         ordemCompra.setValorInvestido(resultadoValorInvestido);
@@ -93,6 +103,7 @@ public class OrdemDeCompraRVService {
 
         Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
         ordensDeCompra.setPessoa(pessoaSalva);
+        ordensDeCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
 
         OrdensDeCompra ordemSalva = buscaPorId(codigo);
         BeanUtils.copyProperties(ordensDeCompra, ordemSalva, "ordemDeCompraId");
@@ -302,6 +313,7 @@ public class OrdemDeCompraRVService {
             BigDecimal ganhoPerdaProjetiva = saldoVariacao.subtract(valorInvestido);
 
             resultados.get(i).setValorCotacaoAtual(valorAtualCota);
+            //resultados.get(i).setValorCotacaoAtual(BigDecimal.ZERO); // SIMULAR ERRO
             resultados.get(i).setVariacao(variacao);
             resultados.get(i).setSaldoVariacao(saldoVariacao);
             resultados.get(i).setGanhoPerdaProjetiva(ganhoPerdaProjetiva);
@@ -446,7 +458,6 @@ public class OrdemDeCompraRVService {
                 //"order by o.tipo_produto_enum, valorInvestido desc ";
                 "order by percentualValorInvestido desc ";
 
-
         // Criar uma consulta nativa usando o EntityManager
         Query query = entityManager.createNativeQuery(sql);
 
@@ -459,7 +470,18 @@ public class OrdemDeCompraRVService {
 
         List<RelatorioBasicoComTotalDiviREcebido> resultadoFinal = unificaRelatorioBasicoComDivsRecebidos(resultados, resultadoDivRecebido);
 
-        return resultados;
+        // Ordenar a lista pelo campo totalDividendosRecebido em ordem decrescente
+        Collections.sort(resultadoFinal, new Comparator<RelatorioBasicoComTotalDiviREcebido>() {
+            @Override
+            public int compare(RelatorioBasicoComTotalDiviREcebido o1, RelatorioBasicoComTotalDiviREcebido o2) {
+                return o2.getTotalDividendosRecebido().compareTo(o1.getTotalDividendosRecebido());
+            }
+        });
+
+        // Alternativamente, usando uma expressão lambda:
+        // resultadoFinal.sort((o1, o2) -> o2.getTotalDividendosRecebido().compareTo(o1.getTotalDividendosRecebido()));
+
+        return resultadoFinal;
     }
 
     private List<RelatorioBasicoComTotalDiviREcebido> unificaRelatorioBasicoComDivsRecebidos(
@@ -467,21 +489,72 @@ public class OrdemDeCompraRVService {
 
         List<RelatorioBasicoComTotalDiviREcebido> retorno = new ArrayList<>();
 
-        for (int i = 0; i < resultados.size(); i++) {
-            String ticker = resultados.get(i).getTicker();
-            resultados.get(i).setTotalDividendosRecebido(BigDecimal.ZERO);
+        for (RelatorioBasicoComTotalDiviREcebido resultado : resultados) {
+            String ticker = resultado.getTicker();
+            resultado.setTotalDividendosRecebido(BigDecimal.ZERO);
 
-            for (int j = 0; j < resultadoDivRecebido.size(); j++) {
-
-                if(resultadoDivRecebido.get(j).getTicker().contains(ticker)) {
-
-                    resultados.get(i).setTotalDividendosRecebido(resultadoDivRecebido.get(j).getValorRecebido());
-                    retorno.add(resultados.get(i));
+            for (DividendoRecebidoByTicker divRecebido : resultadoDivRecebido) {
+                if (divRecebido.getTicker().contains(ticker)) {
+                    resultado.setTotalDividendosRecebido(divRecebido.getValorRecebido());
+                    retorno.add(resultado);
+                    break; // Para evitar duplicações se houver múltiplos matches
                 }
             }
         }
 
+        List<String> tickersSemCadastrodividendo = encontrarItemExtra(resultados, resultadoDivRecebido);
 
+        for (String tickerSemDividendo : tickersSemCadastrodividendo) {
+            String ticker = tickerSemDividendo.replace("[", "").replace("]", "");
+
+            for (RelatorioBasicoComTotalDiviREcebido resultado : resultados) {
+                if (resultado.getTicker().equals(ticker)) {
+                    RelatorioBasicoComTotalDiviREcebido r = new RelatorioBasicoComTotalDiviREcebido();
+
+                    r.setTicker(ticker); // Corrigir aqui para usar o ticker individual
+                    r.setTotalDividendosRecebido(BigDecimal.ZERO);
+                    r.setMediaInvestida(resultado.getMediaInvestida());
+                    r.setValorInvestido(resultado.getValorInvestido());
+                    r.setQuantidadeCotas(resultado.getQuantidadeCotas());
+                    r.setTipoProdutoEnum(resultado.getTipoProdutoEnum());
+                    r.setPercentualValorInvestido(resultado.getPercentualValorInvestido());
+
+                    retorno.add(r);
+                    break; // Para evitar duplicações se houver múltiplos matches
+                }
+            }
+        }
+
+        return retorno;
+    }
+
+
+    private List<String> encontrarItemExtra(
+            List<RelatorioBasicoComTotalDiviREcebido> resultados,
+            List<DividendoRecebidoByTicker> resultadoDivRecebido) {
+
+        List<String> retorno = new ArrayList<>();
+
+        // Cria um Set para armazenar os tickers da segunda lista
+        Set<String> tickersDivRecebido = new HashSet<>();
+        for (DividendoRecebidoByTicker div : resultadoDivRecebido) {
+            tickersDivRecebido.add(div.getTicker());
+        }
+
+        // Verifica quais tickers da primeira lista não estão no Set
+        List<String> tickersExtras = new ArrayList<>();
+        for (RelatorioBasicoComTotalDiviREcebido relatorio : resultados) {
+            if (!tickersDivRecebido.contains(relatorio.getTicker())) {
+                tickersExtras.add(relatorio.getTicker());
+            }
+        }
+
+        // Imprime os tickers que estão na primeira lista mas não na segunda
+        if (!tickersExtras.isEmpty()) {
+            for (String ticker : tickersExtras) {
+                retorno.add(ticker);
+            }
+        }
 
         return retorno;
     }
@@ -519,11 +592,14 @@ public class OrdemDeCompraRVService {
         Boolean isFimDeSemana = FuncoesUtils.fimDeSemanaChecker(); //Se true é Fim de semana
         Boolean isHorarioFuncionamentoB3 = FuncoesUtils.estaNoIntervalo(LocalTime.now(ZoneId.of("America/Sao_Paulo"))
                                             ,horarioInicioStr, horarioFimStr); //Se true está no horario de funcionamento
+
+        Boolean isFeriado = feriadosService.isFeriado(LocalDate.now(ZoneId.of("America/Sao_Paulo")));// Se true é feriado
+
         PrecoAtualCota precoAtualCota = new PrecoAtualCota();
 
         try {
 
-            if(isFimDeSemana || !isHorarioFuncionamentoB3) {
+            if(isFimDeSemana || !isHorarioFuncionamentoB3 || isFeriado) {
 
                 //log.info("É fim de semana ou fora do horario de abertura");
 

@@ -3,5 +3,6 @@ package com.carrafasoft.bsuldo.api.enums;
 public enum TipoDividendoEnum {
 
     DIVIDENDO,
-    JCP
+    JCP,
+    REND_TRIBUTADO
 }

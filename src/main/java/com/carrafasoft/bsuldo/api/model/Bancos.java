@@ -1,7 +1,9 @@
 package com.carrafasoft.bsuldo.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -23,7 +25,7 @@ public class Bancos {
 
     private Boolean status;
 
-    @NotNull
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "pessoa_id")
     private Pessoas pessoa;
@@ -42,7 +44,10 @@ public class Bancos {
     }
 
     private void toUppercase() {
-        nomeBanco = nomeBanco.trim().toUpperCase();
+
+        if(StringUtils.hasLength(nomeBanco)) {
+            nomeBanco = nomeBanco.trim().toUpperCase();
+        }
     }
 
 }

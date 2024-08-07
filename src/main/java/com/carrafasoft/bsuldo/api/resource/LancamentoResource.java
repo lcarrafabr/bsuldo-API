@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,28 +43,42 @@ public class LancamentoResource {
 	
 	@Autowired
 	private LancamentoService lancamentoService;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	
 	@GetMapping
-	public List<Lancamentos> listarTodos() {
+	public List<Lancamentos> listarTodos(@RequestParam("tokenId") String tokenId,
+										 @RequestParam(value = "descricao", required = false) String descricao,
+										 @RequestParam(value = "dataVencimento", required = false) String dataVencimento,
+										 @RequestParam(value = "dataVencimentoFim", required = false) String dataVencimentoFim,
+										 @RequestParam(value = "metodoDeCobrancaId", required = false) String metodoDeCobrancaId,
+										 @RequestParam(value = "situacao", required = false) String situacao,
+										 @RequestParam(value = "tipoLancamento", required = false) String tipoLancamento,
+										 @RequestParam(value = "chavePesquisa", required = false) String chavePesquisa) {
 		
-		return lancamentoRepository.findByAllDesc();
+		//return lancamentoRepository.findByAllDesc(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+		return lancamentoService.findByNewFilters(tokenId, descricao, dataVencimento, dataVencimentoFim,
+													metodoDeCobrancaId, chavePesquisa, situacao, tipoLancamento);
 	}
 	
 	
 	@PostMapping
-	public ResponseEntity<?> cadastrarLancamento(@Valid @RequestBody Lancamentos lancamento, HttpServletResponse response) {
+	public ResponseEntity<?> cadastrarLancamento(@Valid @RequestBody Lancamentos lancamento, HttpServletResponse response,
+												 @RequestParam("tokenId") String tokenId) {
 		
 		ResponseEntity<?> retornoResponse = null;
 		Boolean existParcelamento = lancamento.getParcelado();
 		
 		if(!existParcelamento) { //Se não for parcelado entrar aqui
 			
-			retornoResponse = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response);
+			retornoResponse = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response, tokenId);
 		
 		} else { // Se for parcelado entrar aqui
 			
-			retornoResponse = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response);
+			retornoResponse = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response, tokenId);
 		}
 		
 		return retornoResponse;
@@ -79,9 +94,10 @@ public class LancamentoResource {
 	}
 	
 	@PutMapping("/{codigo}")
-	public ResponseEntity<Lancamentos> atualizaLancamentoIdividual(@PathVariable Long codigo, @Valid @RequestBody Lancamentos lancamento) {
+	public ResponseEntity<Lancamentos> atualizaLancamentoIdividual(@PathVariable Long codigo, @Valid @RequestBody Lancamentos lancamento,
+																   @RequestParam("tokenId") String tokenId) {
 		
-		Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento);
+		Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento, tokenId);
 		
 		return ResponseEntity.ok(lancamentoSalvo);
 	}
@@ -103,9 +119,11 @@ public class LancamentoResource {
 	}
 	
 	@PostMapping("/lancamento-recorrente")
-	public ResponseEntity<Lancamentos> lancamentoRecorrente(@Valid @RequestBody Lancamentos lancamentos, HttpServletResponse response, @RequestParam("qtd_dias") String qtdDias) {
+	public ResponseEntity<Lancamentos> lancamentoRecorrente(@Valid @RequestBody Lancamentos lancamentos, HttpServletResponse response,
+															@RequestParam("qtd_dias") String qtdDias,
+															@RequestParam("tokenId") String tokenId) {
 		
-		return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias);
+		return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias, tokenId);
 	}
 	
 	//************************************************************ RELATORIOS *****************************************************************************************************************
@@ -151,7 +169,8 @@ public class LancamentoResource {
 	}
 	
 	@GetMapping("/valor-a-pagar-no-mes")
-	public BigDecimal valorAPagarNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public BigDecimal valorAPagarNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+									   @RequestParam("tokenId") String tokenId) {
 		
 		return lancamentoRepository.valorApagarNoMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),

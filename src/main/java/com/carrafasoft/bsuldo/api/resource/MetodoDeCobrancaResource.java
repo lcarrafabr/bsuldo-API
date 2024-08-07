@@ -6,6 +6,8 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -38,15 +40,22 @@ public class MetodoDeCobrancaResource {
 	
 	@Autowired
 	private MetodoCobracaService metodoCobService;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	@GetMapping
-	public List<MetodoDeCobranca> listarTodos() {
+	public List<MetodoDeCobranca> listarTodos(@RequestParam("tokenId") String tokenId) {
 		
-		return metodoCobrancaRepository.findAll();
+		return metodoCobrancaRepository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
 	@PostMapping
-	public ResponseEntity<MetodoDeCobranca> cadastrarMetodoCobranca(@Valid @RequestBody MetodoDeCobranca metodoCobranca, HttpServletResponse response) {
+	public ResponseEntity<MetodoDeCobranca> cadastrarMetodoCobranca(@Valid @RequestBody MetodoDeCobranca metodoCobranca, HttpServletResponse response,
+																	@RequestParam("tokenId") String tokenId) {
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		metodoCobranca.setPessoa(pessoaSalva);
 		
 		MetodoDeCobranca metodoCobSalvo = metodoCobrancaRepository.save(metodoCobranca);
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, metodoCobSalvo.getMetodoCobrancaId()));
@@ -55,16 +64,21 @@ public class MetodoDeCobrancaResource {
 	}
 	
 	@GetMapping("/{codigo}")
-	public ResponseEntity<MetodoDeCobranca> buscaPorId(@PathVariable Long codigo) {
+	public ResponseEntity<MetodoDeCobranca> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
 		
-		Optional<MetodoDeCobranca> metodoCobSalvo = metodoCobrancaRepository.findById(codigo);
+		Optional<MetodoDeCobranca> metodoCobSalvo = metodoCobrancaRepository.findByIdAndPessoaId(codigo,
+				pessoaService.recuperaIdPessoaByToken(tokenId));
 		
 		return metodoCobSalvo.isPresent() ? ResponseEntity.ok(metodoCobSalvo.get()) : ResponseEntity.notFound().build();
 	}
 	
 	@PutMapping("/{codigo}")
-	public ResponseEntity<MetodoDeCobranca> atualizarMetodoCobranca(@PathVariable Long codigo, @Valid @RequestBody MetodoDeCobranca metodoCob) {
-		
+	public ResponseEntity<MetodoDeCobranca> atualizarMetodoCobranca(@PathVariable Long codigo, @Valid @RequestBody MetodoDeCobranca metodoCob,
+																	@RequestParam("tokenId") String tokenId) {
+
+		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		metodoCob.setPessoa(pessoaSalva);
+
 		MetodoDeCobranca metodoSalvo = metodoCobService.atualizarMetodoCob(codigo, metodoCob);
 		
 		return ResponseEntity.ok(metodoSalvo);
@@ -95,9 +109,9 @@ public class MetodoDeCobrancaResource {
 	
 	
 	@GetMapping("/busca-por-nome-metodo-cobranca-ativo")
-	public List<MetodoDeCobranca> buscaPorMetodoDeCobrancaAtivo() {
+	public List<MetodoDeCobranca> buscaPorMetodoDeCobrancaAtivo(@RequestParam("tokenId") String tokenId) {
 		
-		return metodoCobrancaRepository.buscaPorNomeMetodoCobrancaAtivo();
+		return metodoCobrancaRepository.buscaPorNomeMetodoCobrancaAtivo(pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 
 }

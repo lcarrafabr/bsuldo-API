@@ -30,9 +30,14 @@ public class CoresConfigService {
 	
 	@Autowired
 	private PessoaRepository pessoaRepository;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	
-	public HashMap<String, Object> listaCoresParaGraficos(Long pessoaId) {
+	public HashMap<String, Object> listaCoresParaGraficos(String tokenId) {
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 		
 		var coresGrafico = new HashMap<String, Object>();
 		List<String> coresPrincipais = configRepository.coresGraficosPrincipais(pessoaId);

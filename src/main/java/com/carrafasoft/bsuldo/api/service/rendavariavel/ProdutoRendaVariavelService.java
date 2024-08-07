@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.service.rendavariavel;
 
+import com.carrafasoft.bsuldo.api.enums.AvaiableSectorsEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.model.Emissores;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
@@ -81,6 +82,8 @@ public class ProdutoRendaVariavelService {
 
         if(!StringUtils.hasLength(sectorName)) {
             sectorName = SETOR_NAO_ENCONTRADO;
+        } else {
+            sectorName = AvaiableSectorsEnum.getSetorTraduzido(sectorName);
         }
 
         Setores setorId = setorService.verificaSetorCadastrado(sectorName, pessoaId);

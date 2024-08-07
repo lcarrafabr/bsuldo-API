@@ -19,7 +19,12 @@ import javax.validation.constraints.NotNull;
 
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "lancamentos")
 public class Lancamentos {
@@ -69,164 +74,39 @@ public class Lancamentos {
 	@Column(length = 20)
 	private TipoLancamento tipoLancamento;
 
-	@NotNull
+
+	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "pessoa_id")
 	private Pessoas pessoa;
 
-	@NotNull
+
 	@ManyToOne
 	@JoinColumn(name = "categoria_id")
 	private Categorias categoria;
 
-	@NotNull
+
 	@ManyToOne
 	@JoinColumn(name = "metodo_de_cobranca_id")
 	private MetodoDeCobranca metodoDeCobranca;
 
-	public Long getLancamentoId() {
-		return lancamentoId;
-	}
+	@ManyToOne
+	@JoinColumn(name = "banco_id")
+	private Bancos banco;
 
-	public void setLancamentoId(Long lancamentoId) {
-		this.lancamentoId = lancamentoId;
-	}
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
-	public BigDecimal getValor() {
-		return valor;
-	}
+		Lancamentos that = (Lancamentos) o;
 
-	public void setValor(BigDecimal valor) {
-		this.valor = valor;
-	}
-
-	public LocalDate getDatavencimento() {
-		return datavencimento;
-	}
-
-	public void setDatavencimento(LocalDate datavencimento) {
-		this.datavencimento = datavencimento;
-	}
-
-	public LocalDate getDataPagamento() {
-		return dataPagamento;
-	}
-
-	public void setDataPagamento(LocalDate dataPagamento) {
-		this.dataPagamento = dataPagamento;
-	}
-
-	public String getDescricao() {
-		return descricao;
-	}
-
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
-
-	public SituacaoEnum getSituacao() {
-		return situacao;
-	}
-
-	public void setSituacao(SituacaoEnum situacao) {
-		this.situacao = situacao;
-	}
-
-	public Boolean getParcelado() {
-		return parcelado;
-	}
-
-	public void setParcelado(Boolean parcelado) {
-		this.parcelado = parcelado;
-	}
-
-	public Integer getQuantidadeParcelas() {
-		return quantidadeParcelas;
-	}
-
-	public void setQuantidadeParcelas(Integer quantidadeParcelas) {
-		this.quantidadeParcelas = quantidadeParcelas;
-	}
-
-	public Integer getNumeroParcela() {
-		return numeroParcela;
-	}
-
-	public void setNumeroParcela(Integer numeroParcela) {
-		this.numeroParcela = numeroParcela;
-	}
-
-	public String getChavePesquisa() {
-		return chavePesquisa;
-	}
-
-	public void setChavePesquisa(String chavePesquisa) {
-		this.chavePesquisa = chavePesquisa;
-	}
-
-	public Boolean getLancRecorrente() {
-		return lancRecorrente;
-	}
-
-	public void setLancRecorrente(Boolean lancRecorrente) {
-		this.lancRecorrente = lancRecorrente;
-	}
-
-	public TipoLancamento getTipoLancamento() {
-		return tipoLancamento;
-	}
-
-	public void setTipoLancamento(TipoLancamento tipoLancamento) {
-		this.tipoLancamento = tipoLancamento;
-	}
-
-	public Pessoas getPessoa() {
-		return pessoa;
-	}
-
-	public void setPessoa(Pessoas pessoa) {
-		this.pessoa = pessoa;
-	}
-
-	public Categorias getCategoria() {
-		return categoria;
-	}
-
-	public void setCategoria(Categorias categoria) {
-		this.categoria = categoria;
-	}
-
-	public MetodoDeCobranca getMetodoDeCobranca() {
-		return metodoDeCobranca;
-	}
-
-	public void setMetodoDeCobranca(MetodoDeCobranca metodoDeCobranca) {
-		this.metodoDeCobranca = metodoDeCobranca;
+		return lancamentoId.equals(that.lancamentoId);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((lancamentoId == null) ? 0 : lancamentoId.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Lancamentos other = (Lancamentos) obj;
-		if (lancamentoId == null) {
-			if (other.lancamentoId != null)
-				return false;
-		} else if (!lancamentoId.equals(other.lancamentoId))
-			return false;
-		return true;
+		return lancamentoId.hashCode();
 	}
 
 	@PrePersist
@@ -237,6 +117,8 @@ public class Lancamentos {
 			situacao = SituacaoEnum.PAGO;
 		} else if (SituacaoEnum.VENCIDO == situacao) {
 			situacao = SituacaoEnum.VENCIDO;
+		} else if(SituacaoEnum.RECEBIDO == situacao) {
+			situacao = SituacaoEnum.RECEBIDO;
 		} else {
 			situacao = SituacaoEnum.PENDENTE;
 		}

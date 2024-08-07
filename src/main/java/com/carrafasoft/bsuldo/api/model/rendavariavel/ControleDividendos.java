@@ -4,6 +4,7 @@ import com.carrafasoft.bsuldo.api.enums.TipoAtivoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoDivRecebimentoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoDividendoEnum;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -47,7 +48,7 @@ public class ControleDividendos {
     private LocalDate dataPagamento;
 
     @NotNull
-    @Column(name = "valor_por_cota")
+    @Column(name = "valor_por_cota", precision = 19, scale = 8)
     private BigDecimal valorPorCota;
 
     @Column(name = "valor_recebido")
@@ -187,13 +188,18 @@ public class ControleDividendos {
 
     @PreUpdate
     public void aoAtualizar() {
+
         ajustaValorDivRecebido();
     }
 
     private void ajustaValorDivRecebido() {
 
-        if(valorRecebido == null) {
+        if(valorRecebido == null || valorRecebido == BigDecimal.ZERO) {
             valorRecebido = BigDecimal.ZERO;
+            tipoDivRecebimentoEnum = TipoDivRecebimentoEnum.A_RECEBER;
+        }
+        if(valorRecebido != null && valorRecebido != BigDecimal.ZERO) {
+            tipoDivRecebimentoEnum = TipoDivRecebimentoEnum.RECEBIDO;
         }
     }
 }

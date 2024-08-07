@@ -58,8 +58,11 @@ public interface OrdemDeCompraRepository extends JpaRepository<OrdensDeCompra, L
     public List<OrdensDeCompra> findAllDesc(Long pessoaId);
 
     @Query(nativeQuery = true,
-    value = "select distinct * from ordens_de_compra group by produto_id")
-    List<OrdensDeCompra> buscaListaDeComprasAgrupadasPorProduto();
+    value = "select distinct * " +
+            "from ordens_de_compra " +
+            "where pessoa_id = :pessoaId " +
+            "group by produto_id ")
+    List<OrdensDeCompra> buscaListaDeComprasAgrupadasPorProduto(Long pessoaId);
 
     @Query(nativeQuery = true,
     value = "select COALESCE(sum(valor_investido), 0) as valor from ordens_de_compra " +

@@ -2,8 +2,8 @@ package com.carrafasoft.bsuldo.api.enums;
 
 public enum TipoLancamento {
 
-	RECEITA("Receita"),
-	DESPESA("Despesa");
+	RECEITA("RECEITA"),
+	DESPESA("DESPESA");
 	
 	 
 	private final String descricao;

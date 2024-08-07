@@ -2,8 +2,10 @@ package com.carrafasoft.bsuldo.api.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.enums.StatusAcompanhamnetoEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.AcompanhamentoEstrategico;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.AcompanhamentoEstrategicoRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.exceptions.AcompanhamentoEstrategicoExistenteException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -26,12 +28,19 @@ public class AcompanhamentoEstrategicoService {
     OrdemDeCompraRVService ordemCompraService;
 
     @Autowired
+    private PessoaService pessoaService;
+
+    @Autowired
     private ApplicationEventPublisher publisher;
 
 
-    public AcompanhamentoEstrategico cadastrarAcompanhamentoEstrategico(AcompanhamentoEstrategico acompEstr, HttpServletResponse response) throws RuntimeException{
+    public AcompanhamentoEstrategico cadastrarAcompanhamentoEstrategico(AcompanhamentoEstrategico acompEstr, HttpServletResponse response,
+                                                                        String tokenId) throws RuntimeException{
 
         log.info("...: Iniciando Cadastro de acompanhamento estratégico :...");
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        acompEstr.setPessoa(pessoaSalva);
 
         Boolean acompanhamentoExistente = verificaAcompanhamentoCadastradoByTicker(acompEstr.getTicker());
 
@@ -85,9 +94,12 @@ public class AcompanhamentoEstrategicoService {
         return retorno;
     }
 
-    public AcompanhamentoEstrategico atualizaAcompanhamentoEstrategico(Long codigo, AcompanhamentoEstrategico acompEstraRequest) {
+    public AcompanhamentoEstrategico atualizaAcompanhamentoEstrategico(Long codigo, AcompanhamentoEstrategico acompEstraRequest, String tokenId) {
 
         log.info("...: Iniciando atualização de acompanhamento estratégico :...");
+
+        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        acompEstraRequest.setPessoa(pessoaSalva);
 
         Boolean statusAcompVariacaoRecebido = acompEstraRequest.getAcompanharVariacao();
         if(statusAcompVariacaoRecebido && acompEstraRequest.getStatusAcompanhamentoEnum() != StatusAcompanhamnetoEnum.COMPRADO) {

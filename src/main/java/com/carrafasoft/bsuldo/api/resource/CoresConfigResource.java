@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,20 +22,23 @@ public class CoresConfigResource {
 	
 	@Autowired
 	private CoresConfigRepository configRepository;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	@Autowired
 	private CoresConfigService coresConfigService;
 	
 	@GetMapping
-	public List<CoresConfig> findAll() {
+	public List<CoresConfig> findAll(@RequestParam("tokenId") String tokenId) {
 		
-		return configRepository.findAll();
+		return configRepository.listarTodosByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
-	@GetMapping("/cores-graficos/{pessoaId}")
-	public HashMap<String, Object> listarCoresParaGraficos(@RequestParam("pessoaId") Long pessoaId) {
+	@GetMapping("/cores-graficos/{tokenId}")
+	public HashMap<String, Object> listarCoresParaGraficos(@RequestParam("tokenId") String tokenId) {
 				
-		return coresConfigService.listaCoresParaGraficos(pessoaId);
+		return coresConfigService.listaCoresParaGraficos(tokenId);
 	}
 	
 	@GetMapping("/{codigo}")

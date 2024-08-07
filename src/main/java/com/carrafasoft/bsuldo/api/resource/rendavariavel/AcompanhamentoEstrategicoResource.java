@@ -2,9 +2,9 @@ package com.carrafasoft.bsuldo.api.resource.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.model.rendavariavel.AcompanhamentoEstrategico;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.AcompanhamentoEstrategicoRepository;
+import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.rendavariavel.AcompanhamentoEstrategicoService;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
-import com.carrafasoft.bsuldo.exceptions.AcompanhamentoEstrategicoExistenteException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -26,31 +26,38 @@ public class AcompanhamentoEstrategicoResource {
     @Autowired
     private AcompanhamentoEstrategicoService service;
 
+    @Autowired
+    PessoaService pessoaService;
+
     @GetMapping
-    public List<AcompanhamentoEstrategico> findAll(@RequestParam("pessoaId") Long pessoaId) {
+    public List<AcompanhamentoEstrategico> findAll(@RequestParam("tokenId") String tokenId) {
+
+        Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 
         return  repository.findAllByPessoaId(pessoaId);
     }
 
     @GetMapping("/find-by-filtros")
-    public List<AcompanhamentoEstrategico> findByFiltros(@RequestParam("pessoaId") String pessoaId, @RequestParam("ticker") String ticker,
+    public List<AcompanhamentoEstrategico> findByFiltros(@RequestParam("tokenId") String tokenId, @RequestParam("ticker") String ticker,
                                                          @RequestParam("setorId") String setorId, @RequestParam("segmentoId") String segmentoId,
                                                          @RequestParam("statusAcompanhamento") String statusAcompanhamento) {
 
+        Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 
         return repository.findByFiltros(FuncoesUtils.converteVazioParaNulo(ticker),
                 FuncoesUtils.converteVazioParaNulo(setorId),
                 FuncoesUtils.converteVazioParaNulo(segmentoId),
                 FuncoesUtils.converteVazioParaNulo(statusAcompanhamento),
-                FuncoesUtils.converteVazioParaNulo(pessoaId)
+                pessoaId
         );
     }
 
     @PostMapping
     public ResponseEntity<?> cadastrarAcompanhamentoEstrategico(@Valid @RequestBody AcompanhamentoEstrategico acompEstr,
-                                                                                        HttpServletResponse response) {
+                                                                                        HttpServletResponse response,
+                                                                @RequestParam("tokenId") String tokenId) {
         try {
-            AcompanhamentoEstrategico acompSalvo = service.cadastrarAcompanhamentoEstrategico(acompEstr, response);
+            AcompanhamentoEstrategico acompSalvo = service.cadastrarAcompanhamentoEstrategico(acompEstr, response, tokenId);
             return ResponseEntity.status(HttpStatus.CREATED).body(acompSalvo);
 
         } catch (EmptyResultDataAccessException e) {
@@ -60,18 +67,19 @@ public class AcompanhamentoEstrategicoResource {
     }
 
     @GetMapping("/{codigo}")
-    public  ResponseEntity<AcompanhamentoEstrategico> buscaPorId(@PathVariable Long codigo) {
+    public  ResponseEntity<AcompanhamentoEstrategico> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
 
-        Optional<AcompanhamentoEstrategico> acompEstrSalvo = repository.findById(codigo);
+        Optional<AcompanhamentoEstrategico> acompEstrSalvo = repository.findByCodigoAndPessoaId(codigo, pessoaService.recuperaIdPessoaByToken(tokenId));
 
         return acompEstrSalvo.isPresent() ? ResponseEntity.ok(acompEstrSalvo.get()) : ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{codigo}")
     public ResponseEntity<AcompanhamentoEstrategico> atualziarAcompanhamentoEstrategico(@PathVariable Long codigo,
-                                                                                        @Valid @RequestBody AcompanhamentoEstrategico acompEstraRequest) {
+                                                                                        @Valid @RequestBody AcompanhamentoEstrategico acompEstraRequest,
+                                                                                        @RequestParam("tokenId") String tokenId) {
 
-        AcompanhamentoEstrategico acompEstrAtualizado = service.atualizaAcompanhamentoEstrategico(codigo, acompEstraRequest);
+        AcompanhamentoEstrategico acompEstrAtualizado = service.atualizaAcompanhamentoEstrategico(codigo, acompEstraRequest, tokenId);
 
         return ResponseEntity.ok(acompEstrAtualizado);
     }

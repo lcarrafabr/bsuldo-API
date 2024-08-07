@@ -1,7 +1,7 @@
 package com.carrafasoft.bsuldo.api.resource.rendavariavel;
 
-import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.ValorDividendosRecebidosPorMesEAno;
-import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.ValorPorAnoGridDTO;
+import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.*;
+import com.carrafasoft.bsuldo.api.model.reports.GridProventosRecebidosEFuturos;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.rendavariavel.dto.DashboardInvestimentosService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,5 +39,34 @@ public class DasboardInvestimentosResource {
         retornoList.add(retorno);
 
         return retornoList;
+    }
+
+    @GetMapping("/historico-proventos-futuros")
+    public List<HistoricoProventosFuturos> buscaHistoricoProventosFuturos(@RequestParam("tokenId") String tokenId) {
+
+        List<HistoricoProventosFuturos> response = service.buscaHistoricoProventosFuturos(tokenId);
+
+        return response;
+    }
+
+    @GetMapping("/relatorio-por-segmento")
+    public List<RelatorioPorSegmento> getRelatorioPorSegmento(@RequestParam("tokenId") String tokenId,
+                                                              @RequestParam("tipoProduto") String tipoProduto) {
+
+        return service.getRelatorioPorSegmento(tokenId, tipoProduto);
+    }
+
+    @GetMapping("/relatorio-por-setores")
+    public List<RelatorioSetores> getRelatorioPorSetor(@RequestParam("tokenId") String tokenId,
+                                                       @RequestParam("tipoProduto") String tipoProduto) {
+
+        return service.getRelatorioPorSetores(tokenId, tipoProduto);
+    }
+
+    @GetMapping("/grid-proventos-recebidos-e-futuros")
+    public List<GridProventosRecebidosEFuturos> getRelatorioGridProventosRecebidosEFuturos(@RequestParam("tokenId") String tokenId,
+                                                                                           @RequestParam("tipoPesquisa") String tipoPesquisa) {
+
+        return service.getGridProventosRecebidosEFuturos(tokenId, tipoPesquisa);
     }
 }

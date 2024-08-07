@@ -74,9 +74,15 @@ public class BancosResource {
         service.atualizaStatusAtivo(codigo, ativo);
     }
 
-    @GetMapping("busca-banco-por-nome")
+    @GetMapping("/busca-banco-por-nome")
     public List<Bancos> buscaBancoPorNome(@RequestParam("nomeBanco") String nomeBanco, @RequestParam("pessoaId") String pessoaId) {
 
         return repository.findAllBynomeBanco(nomeBanco, pessoaService.recuperaIdPessoaByToken(pessoaId));
+    }
+
+    @GetMapping("/busca-bancos-ativos")
+    public List<Bancos> buscaBancosAtivos(@RequestParam("tokenId") String tokenId) {
+
+        return repository.findByPessoaIDAndAtivos(pessoaService.recuperaIdPessoaByToken(tokenId));
     }
 }

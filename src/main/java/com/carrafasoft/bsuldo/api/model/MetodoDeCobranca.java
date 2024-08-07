@@ -1,15 +1,14 @@
 package com.carrafasoft.bsuldo.api.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "metodo_de_cobranca")
 public class MetodoDeCobranca {
@@ -23,43 +22,15 @@ public class MetodoDeCobranca {
 	@Column(name = "nome_metodo_cobranca", length = 100)
 	private String nomeMetodoCob;
 
-	@NotNull
 	private Boolean status;
 
 	@Column(columnDefinition = "TEXT")
 	private String descricao;
 
-	public Long getMetodoCobrancaId() {
-		return metodoCobrancaId;
-	}
-
-	public void setMetodoCobrancaId(Long metodoCobrancaId) {
-		this.metodoCobrancaId = metodoCobrancaId;
-	}
-
-	public String getNomeMetodoCob() {
-		return nomeMetodoCob;
-	}
-
-	public void setNomeMetodoCob(String nomeMetodoCob) {
-		this.nomeMetodoCob = nomeMetodoCob;
-	}
-
-	public Boolean getStatus() {
-		return status;
-	}
-
-	public void setStatus(Boolean status) {
-		this.status = status;
-	}
-
-	public String getDescricao() {
-		return descricao;
-	}
-
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "pessoa_id")
+	private Pessoas pessoa;
 
 	@Override
 	public int hashCode() {
@@ -89,6 +60,7 @@ public class MetodoDeCobranca {
 	@PrePersist
 	public void aoCadastrar() {
 
+		status = true;
 		toUpperCase();
 	}
 

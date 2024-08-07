@@ -47,7 +47,6 @@ public class AcompanhamentoEstrategico {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    @NotNull
     @ManyToOne
     @JoinColumn(name = "pessoa_id")
     private Pessoas pessoa;

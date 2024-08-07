@@ -43,9 +43,10 @@ public class ControleDividendosResource {
     }
 
     @PostMapping
-    public ResponseEntity<ControleDividendos> cadastrarControlDiv(@Valid @RequestBody ControleDividendos controleDividendo, HttpServletResponse response) {
+    public ResponseEntity<ControleDividendos> cadastrarControlDiv(@Valid @RequestBody ControleDividendos controleDividendo, HttpServletResponse response,
+                                                                  @RequestParam("tokenId") String tokenId) {
 
-        ControleDividendos controleDividendoSolvo = service.cadastrarControleDividendo(controleDividendo,response);
+        ControleDividendos controleDividendoSolvo = service.cadastrarControleDividendo(controleDividendo,response, tokenId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(controleDividendoSolvo);
     }
@@ -60,9 +61,10 @@ public class ControleDividendosResource {
 
     @PutMapping("/{codigo}")
     public ResponseEntity<ControleDividendos> atualizarControlDiv(@PathVariable Long codigo,
-                                                                  @Valid @RequestBody ControleDividendos controleDividendos) {
+                                                                  @Valid @RequestBody ControleDividendos controleDividendos,
+                                                                  @RequestParam("tokenId") String tokenId) {
 
-        ControleDividendos controlDivAtualizado = service.atualizarControleDividendos(codigo, controleDividendos);
+        ControleDividendos controlDivAtualizado = service.atualizarControleDividendos(codigo, controleDividendos, tokenId);
 
         return ResponseEntity.ok(controlDivAtualizado);
     }
@@ -83,9 +85,9 @@ public class ControleDividendosResource {
     }
 
     @GetMapping("/busca-ticker-combobox")
-    public List<ControleDividendosCadastroCombobox> buscaControleDividendosCombobox() {
+    public List<ControleDividendosCadastroCombobox> buscaControleDividendosCombobox(@RequestParam("tokenId") String tokenId) {
 
-        List<ControleDividendosCadastroCombobox> list = service.buscaControleDividendosCombobox();
+        List<ControleDividendosCadastroCombobox> list = service.buscaControleDividendosCombobox(tokenId);
 
         return list;
     }
@@ -121,5 +123,11 @@ public class ControleDividendosResource {
 
         return service.getDadosGraficoDividendosPorMesEAno(ano,
                 mes, pessoaService.recuperaIdPessoaByToken(idToken));
+    }
+
+    @GetMapping("/verifica-div-a-receber-manual")
+    public void verificaDividendoAReceberManual() {
+
+        service.verificaDividendoAReceber();
     }
 }
