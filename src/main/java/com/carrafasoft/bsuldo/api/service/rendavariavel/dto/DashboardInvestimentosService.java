@@ -168,6 +168,7 @@ public class DashboardInvestimentosService {
                 "SELECT SUM( " +
                 "CASE " +
                 "WHEN c.tipo_dividendo_enum = 'JCP' THEN o.quantidade_cotas * c.valor_por_cota * 0.85 " +
+                "WHEN c.tipo_dividendo_enum = 'REND_TRIBUTADO' THEN o.quantidade_cotas * c.valor_por_cota * 0.80 " +
                 "ELSE o.quantidade_cotas * c.valor_por_cota " +
                 "END " +
                 ") " +

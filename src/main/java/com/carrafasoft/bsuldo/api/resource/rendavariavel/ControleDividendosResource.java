@@ -36,10 +36,15 @@ public class ControleDividendosResource {
 
 
     @GetMapping
-    public List<ControleDividendos> findAll(@RequestParam("tokenId") String tokenId) {
+    public List<ControleDividendos> findAll(@RequestParam("tokenId") String tokenId,
+                                            @RequestParam(value = "ticker", required = false) String ticker,
+                                            @RequestParam(value = "tipoRecebimento", required = false) String tipoRecebimento,
+                                            @RequestParam(value = "dataReferencia", required = false) String dataReferencia,
+                                            @RequestParam(value = "dataPagamento", required = false) String dataPagamento) {
 
         //return repository.findAll(Sort.by(Sort.Direction.DESC, "controleDividendoId"));
-        return repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        //return repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
+        return service.listarTodosOsDividendos(tokenId, ticker, tipoRecebimento, dataReferencia, dataPagamento);
     }
 
     @PostMapping

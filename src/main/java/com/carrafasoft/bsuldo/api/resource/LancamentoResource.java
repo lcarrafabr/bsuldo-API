@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.model.reports.*;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosDiaMes;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotaisPorAno;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
-import com.carrafasoft.bsuldo.api.model.reports.TotalPorCategoriaMes;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.service.LancamentoService;
 import com.carrafasoft.bsuldo.api.utils.FuncoesUtils;
@@ -174,56 +169,129 @@ public class LancamentoResource {
 		
 		return lancamentoRepository.valorApagarNoMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
 	}
 	
 	@GetMapping("/valor-pago-no-mes")
-	public BigDecimal valorPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public BigDecimal valorPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+									 @RequestParam("tokenId") String tokenId) {
 		
 		return lancamentoRepository.valorPagoNoMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
 	}
 	
 	@GetMapping("/valor-vencido-no-mes")
-	public BigDecimal valorVencidoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public BigDecimal valorVencidoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										@RequestParam("tokenId") String tokenId) {
 		
 		return lancamentoRepository.valorVencidoNoMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
 	}
 	
 	@GetMapping("/total-devedor-por-ano")
-	public BigDecimal totalDevedorPorAno(@RequestParam("ano") String ano) {
+	public BigDecimal totalDevedorPorAno(@RequestParam("ano") String ano, @RequestParam("tokenId") String tokenId) {
 		
-		return lancamentoRepository.totalDevedorPorAno(Integer.valueOf(ano));
+		return lancamentoRepository.totalDevedorPorAno(Integer.valueOf(ano),
+				pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
 	@GetMapping("/total-pago-por-ano")
-	public BigDecimal totalPagoNoAno(@RequestParam("ano") String ano) {
+	public BigDecimal totalPagoNoAno(@RequestParam("ano") String ano, @RequestParam("tokenId") String tokenId) {
 		
-		return lancamentoRepository.totalPagoNoAno(Integer.valueOf(ano));
+		return lancamentoRepository.totalPagoNoAno(Integer.valueOf(ano),
+				pessoaService.recuperaIdPessoaByToken(tokenId));
 	}
 	
 	@GetMapping("/perc-pago-no-mes")
-	public BigDecimal percentualPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public BigDecimal percentualPagoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										  @RequestParam("tokenId") String tokenId) {
 		
 		
 		return lancamentoRepository.percentualPagoNoMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
+	}
+
+	@GetMapping("/valor-a-receber-no-mes")
+	public BigDecimal valorAReceberNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										 @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.valorAReceberNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
+		);
+	}
+
+
+	@GetMapping("/valor-recebido-no-mes")
+	public BigDecimal valorARecebidoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										 @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.valorRecebidoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
+		);
+	}
+
+	@GetMapping("/valor-atrasado-no-mes")
+	public BigDecimal valorAtrasadoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										@RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.valorAtrasadoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
+		);
+	}
+
+
+	@GetMapping("/total-a-receber-no-ano")
+	public BigDecimal totalAReceberNoAno(@RequestParam("ano") String ano, @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.totalAReceberNoAno(Integer.valueOf(ano),
+				pessoaService.recuperaIdPessoaByToken(tokenId));
+	}
+
+
+	@GetMapping("/receita-total-por-ano")
+	public BigDecimal receitaTotalAno(@RequestParam("ano") String ano, @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.receitatotalAno(Integer.valueOf(ano),
+				pessoaService.recuperaIdPessoaByToken(tokenId));
+	}
+
+
+	@GetMapping("/perc-recebido-no-mes")
+	public BigDecimal percentualRecebidoNoMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+										  @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoRepository.percentualRecebidoNoMes(
+				FuncoesUtils.converterStringParaLocalDate(dataIni),
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
+		);
 	}
 	
 	@GetMapping("/total-categoria-mes")
-	public List<TotalPorCategoriaMes> totalPorCategoriaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public List<TotalPorCategoriaMes> totalPorCategoriaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+														   @RequestParam("tokenId") String tokenId) {
 		
 		List<String> lista = lancamentoRepository.totalPorCategoriaMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
 		
 		
@@ -250,11 +318,13 @@ public class LancamentoResource {
 	}
 	
 	@GetMapping("/total-metodo-cob-mes")
-	public List<TotalMetodoCobrancaMes> totalPorMetodoCobrancaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public List<TotalMetodoCobrancaMes> totalPorMetodoCobrancaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+																  @RequestParam("tokenId") String tokenId) {
 		
 		List<String> lista = lancamentoRepository.totalPorMetodoCobrancaMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				pessoaService.recuperaIdPessoaByToken(tokenId)
 				);
 		
 		List<TotalMetodoCobrancaMes> totalMetodoCobrancaMes = new ArrayList<TotalMetodoCobrancaMes>();
@@ -340,6 +410,37 @@ public class LancamentoResource {
 		
 		//return lancamentoPorDia;
 		return lancamentoPorDiaCompleto;
+	}
+
+	@GetMapping("/lancamentos-dia-mes-receitas-despesas")
+	public List<LancamentosDiaMesReceitasDespesas> lancamentosDiaMesReceitasDespesas(@RequestParam("dataIni") String dataIni,
+																					 @RequestParam("dataFim") String dataFim,
+																					 @RequestParam("tokenId") String tokenId) {
+
+		List<LancamentosDiaMesReceitasDespesas> list = lancamentoService.lancamentosDiaMesReceitasDespesas(dataIni, dataFim, tokenId);
+
+		return list;
+	}
+
+	@GetMapping("/lista-total-despesa-por-mes-ano")
+	public List<TotalDespesasPorMesAno> listaTotalDespesaporMesAno(@RequestParam("ano") String ano,
+																   @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoService.totalDespesasPorMesAnos(ano, tokenId);
+	}
+
+	@GetMapping("/grafico-total-receita-despesa-by-mes-ano")
+	public List<GraficoTotalReceitasEDespesasPorAno> graficoTotalReceitasEDespesasPorAnos(@RequestParam("ano") String ano,
+																   @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoService.graficoTotalReceitasEDespesasPorAnos(ano, tokenId);
+	}
+
+	@GetMapping("/grafico-total-receita-despesa-por-ano")
+	public List<GraficoBarrasReceitaDespesaPorAno> graficoBarrasReceitaDespesaPorAnos(@RequestParam("ano") String ano,
+																						  @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoService.graficoBarrasReceitaDespesaPorAnos(ano, tokenId);
 	}
 	
 	@GetMapping("/totais-por-ano")

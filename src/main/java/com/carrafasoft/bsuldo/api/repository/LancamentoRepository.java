@@ -108,43 +108,49 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 	public void atualizaLancamentosRecebimentoVencidos();
 	
 	@Query(nativeQuery = true,
-			value = "select sum(valor) as valor_a_pagar "
+			value = "select COALESCE(sum(valor), 0) as valor_a_pagar "
 					+ "from lancamentos "
-					+ "where data_vencimento between :dataIni and :dataFim "
-					+ "and situacao in ('PENDENTE', 'VENCIDO') ")
-	public BigDecimal valorApagarNoMes(LocalDate dataIni, LocalDate dataFim);
+					+ "where pessoa_id = :pessoaId " +
+					"AND data_vencimento between :dataIni and :dataFim "
+					+ "and situacao in ('PENDENTE', 'VENCIDO') " +
+					"and tipo_lancamento = 'DESPESA' ")
+	BigDecimal valorApagarNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	@Query(nativeQuery = true,
-			value = "select sum(valor) as total_pago "
+			value = "select COALESCE(sum(valor), 0) as total_pago "
 					+ "from lancamentos "
 					+ "where data_vencimento between :dataIni and :dataFim "
-					+ "and situacao = 'PAGO' ")
-	public BigDecimal valorPagoNoMes(LocalDate dataIni, LocalDate dataFim);
+					+ "and situacao = 'PAGO' " +
+					"and tipo_lancamento = 'DESPESA' " +
+					"and pessoa_id = :pessoaId ")
+	BigDecimal valorPagoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	
 	@Query(nativeQuery = true,
-			value = "select sum(valor) as total_pago "
+			value = "select COALESCE(sum(valor), 0) as total_pago "
 					+ "from lancamentos "
 					+ "where data_vencimento between :dataIni and :dataFim "
-					+ "and situacao = 'VENCIDO' ")
-	public BigDecimal valorVencidoNoMes(LocalDate dataIni, LocalDate dataFim);
+					+ "and situacao = 'VENCIDO' " +
+					"and tipo_lancamento = 'DESPESA' " +
+					"and pessoa_id = :pessoaId ")
+	BigDecimal valorVencidoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select sum(valor) as total_devedor "
 					+ "from lancamentos "
-					+ "where year(data_vencimento) = :ano ")
-	public BigDecimal totalDevedorPorAno(int ano);
+					+ "where pessoa_id = :pessoaId " +
+					"and year(data_vencimento) = :ano " +
+					"and tipo_lancamento = 'DESPESA' " +
+					"and situacao in ('PENDENTE', 'VENCIDO') ")
+	BigDecimal totalDevedorPorAno(int ano, Long pessoaId);
 	
 	@Query(nativeQuery = true,
-			value = "select  sum(valor) - ( "
-					+ "select  sum(valor) as total_ano "
-					+ "from lancamentos "
-					+ "where year(data_vencimento) = :ano "
-					+ "and situacao = 'PAGO' "
-					+ ")  as total_ano "
-					+ "from lancamentos "
-					+ "where year(data_vencimento) = :ano ")
-	public BigDecimal totalPagoNoAno(int ano);
+			value = "select coalesce(sum(valor), 0) as valor " +
+					"from lancamentos " +
+					"where pessoa_id = :pessoaId " +
+					"and tipo_lancamento = 'DESPESA' " +
+					"and year(data_vencimento) = :ano ")
+	BigDecimal totalPagoNoAno(int ano, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select if(total_pago is not null, total_pago, 0) as perc_pago "
@@ -153,31 +159,106 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "select sum(l2.valor) as total_pago "
 					+ "from lancamentos l2 "
 					+ "where situacao in ('PENDENTE', 'VENCIDO', 'PAGO') "
-					+ "and data_vencimento between :dataIni and :dataFim "
+					+ "and data_vencimento between :dataIni and :dataFim " +
+					"and pessoa_id = :pessoaId " +
+					"and tipo_lancamento = 'DESPESA' "
 					+ ")) * 100 as total_pago "
 					+ "from ( "
 					+ "select sum(l.valor) as total_devedor "
 					+ "from lancamentos l "
-					+ "where situacao in ('PAGO') "
+					+ "where situacao in ('PAGO') " +
+					"and tipo_lancamento = 'DESPESA' " +
+					"and pessoa_id = :pessoaId "
 					+ "and data_vencimento between :dataIni and :dataFim ) as total_devedor ) as total ")
-	public BigDecimal percentualPagoNoMes(LocalDate dataIni, LocalDate dataFim);
+	BigDecimal percentualPagoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
+
+
+	@Query(nativeQuery = true,
+	value = "select COALESCE(sum(valor), 0) as valor_a_pagar " +
+			"from lancamentos " +
+			"where pessoa_id = :pessoaId " +
+			"AND data_vencimento between :dataIni and :dataFim " +
+			"and situacao in ('PENDENTE', 'ATRASADO') " +
+			"and tipo_lancamento = 'RECEITA' ")
+	BigDecimal valorAReceberNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
+
+	@Query(nativeQuery = true,
+			value = "select COALESCE(sum(valor), 0) as total_recebido " +
+					"from lancamentos " +
+					"where pessoa_id = :pessoaId " +
+					"AND data_vencimento between :dataIni and :dataFim " +
+					"and situacao in ('RECEBIDO') " +
+					"and tipo_lancamento = 'RECEITA' ")
+	BigDecimal valorRecebidoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
+
+
+	@Query(nativeQuery = true,
+			value = "select COALESCE(sum(valor), 0) as total_pago "
+					+ "from lancamentos "
+					+ "where data_vencimento between :dataIni and :dataFim "
+					+ "and situacao = 'ATRASADO' " +
+					"and tipo_lancamento = 'RECEITA' " +
+					"and pessoa_id = :pessoaId ")
+	BigDecimal valorAtrasadoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
+
+
+	@Query(nativeQuery = true,
+			value = "select sum(valor) as total_devedor "
+					+ "from lancamentos "
+					+ "where pessoa_id = :pessoaId " +
+					"and year(data_vencimento) = :ano " +
+					"and tipo_lancamento = 'RECEITA' " +
+					"and situacao in ('PENDENTE', 'ATRASADO') ")
+	BigDecimal totalAReceberNoAno(int ano, Long pessoaId);
+
+	@Query(nativeQuery = true,
+			value = "select coalesce(sum(valor), 0) as valor " +
+					"from lancamentos " +
+					"where pessoa_id = :pessoaId " +
+					"and tipo_lancamento = 'RECEITA' " +
+					"and year(data_vencimento) = :ano ")
+	BigDecimal receitatotalAno(int ano, Long pessoaId);
+
+	@Query(nativeQuery = true,
+			value = "select if(total_pago is not null, total_pago, 0) as perc_recebido "
+					+ "from ( "
+					+ "select (total_devedor / ( "
+					+ "select sum(l2.valor) as total_pago "
+					+ "from lancamentos l2 "
+					+ "where situacao in ('PENDENTE', 'ATRASADO', 'RECEBIDO') "
+					+ "and data_vencimento between :dataIni and :dataFim " +
+					"and pessoa_id = :pessoaId " +
+					"and tipo_lancamento = 'RECEITA' "
+					+ ")) * 100 as total_pago "
+					+ "from ( "
+					+ "select sum(l.valor) as total_devedor "
+					+ "from lancamentos l "
+					+ "where situacao in ('RECEBIDO') " +
+					"and tipo_lancamento = 'RECEITA' " +
+					"and pessoa_id = :pessoaId "
+					+ "and data_vencimento between :dataIni and :dataFim ) as total_devedor ) as total ")
+	BigDecimal percentualRecebidoNoMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select c.nome_categoria, sum(l.valor) totais "
 					+ "from lancamentos l "
 					+ "inner join categorias c on c.categoria_id = l.categoria_id "
-					+ "where l.data_vencimento between :dataIni and :dataFim "
+					+ "where l.data_vencimento between :dataIni and :dataFim " +
+					"and l.pessoa_id = :pessoaId " +
+					"and l.tipo_lancamento = 'DESPESA' "
 					+ "group by c.nome_categoria ")
-	public List<String> totalPorCategoriaMes(LocalDate dataIni, LocalDate dataFim);
+	List<String> totalPorCategoriaMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	
 	@Query(nativeQuery = true,
 			value = "select m.nome_metodo_cobranca, sum(l.valor) as totais "
 					+ "from lancamentos l "
 					+ "inner join metodo_de_cobranca m on m.metodo_de_cobranca_id = l.metodo_de_cobranca_id "
-					+ "where l.data_vencimento between :dataIni and :dataFim "
+					+ "where l.data_vencimento between :dataIni and :dataFim " +
+					"and l.pessoa_id = :pessoaId " +
+					"and l.tipo_lancamento = 'DESPESA' "
 					+ "group by m.nome_metodo_cobranca ")
-	public List<String> totalPorMetodoCobrancaMes(LocalDate dataIni, LocalDate dataFim);
+	List<String> totalPorMetodoCobrancaMes(LocalDate dataIni, LocalDate dataFim, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select day(data_vencimento) as dia, sum(valor) as total "

@@ -8,9 +8,7 @@ import com.carrafasoft.bsuldo.api.model.Bancos;
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.Usuarios;
-import com.carrafasoft.bsuldo.api.model.reports.LancamentosPorMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobranca;
-import com.carrafasoft.bsuldo.api.model.reports.TotalMetodoCobrancaMes;
+import com.carrafasoft.bsuldo.api.model.reports.*;
 import com.carrafasoft.bsuldo.api.repository.BancoRepository;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
 import com.carrafasoft.bsuldo.api.repository.UsuarioRepository;
@@ -22,9 +20,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -54,6 +55,9 @@ public class LancamentoService {
 	
 	@Autowired
 	private Mailer mailer;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	
 	//@Scheduled(fixedDelay = 1000 * 60 * 30)
 	@Scheduled(cron = "0 0 0 * * *")
@@ -283,7 +287,8 @@ public class LancamentoService {
 		
 		List<String> listametodoCob = lancamentoRepository.totalPorMetodoCobrancaMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
-				FuncoesUtils.converterStringParaLocalDate(dataFim)
+				FuncoesUtils.converterStringParaLocalDate(dataFim),
+				1L //TODO colocar tokenID
 				);
 		
 		List<TotalMetodoCobrancaMes> totalMetodoCobrancaMes = new ArrayList<TotalMetodoCobrancaMes>();
@@ -477,6 +482,114 @@ public class LancamentoService {
 				pessoaId);
 	}
 
+	public List<LancamentosDiaMesReceitasDespesas> lancamentosDiaMesReceitasDespesas(String dataIni, String dataFim, String tokenId) {
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+
+		List<LancamentosDiaMesReceitasDespesas> retorno = new ArrayList<>();
+
+		String sql = "SELECT " +
+				"DAY(d.data) AS dia, " +
+				"COALESCE(SUM(CASE WHEN l.tipo_lancamento = 'DESPESA' THEN l.valor ELSE 0 END), 0) AS lancDespesa, " +
+				"COALESCE(SUM(CASE WHEN l.tipo_lancamento = 'RECEITA' THEN l.valor ELSE 0 END), 0) AS lancReceita " +
+				"FROM ( " +
+				"SELECT DATE_ADD('" + dataIni + "', INTERVAL n.n DAY) AS data " +
+				"FROM ( " +
+				"SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 " +
+				"UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 " +
+				"UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 " +
+				"UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 " +
+				"UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 " +
+				"UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 " +
+				"UNION ALL SELECT 24 UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 27 " +
+				"UNION ALL SELECT 28 UNION ALL SELECT 29 UNION ALL SELECT 30 " +
+				") AS n " +
+				"WHERE DATE_ADD('" + dataIni + "', INTERVAL n.n DAY) <= '" + dataFim + "') d " +
+				"LEFT JOIN lancamentos l ON l.data_vencimento = d.data " +
+				"AND l.data_vencimento BETWEEN '2024-08-01' AND '2024-08-31' " +
+				"and l.pessoa_id = " + pessoaId +  " " +
+				"GROUP BY d.data " +
+				"ORDER BY d.data ";
+
+		retorno = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LancamentosDiaMesReceitasDespesas.class));
+
+		return retorno;
+	}
+
+	public List<TotalDespesasPorMesAno> totalDespesasPorMesAnos(String ano, String tokenId) {
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+		List<TotalDespesasPorMesAno> totalList = new ArrayList<>();
+
+		String sql = "SELECT " +
+				"MONTH(calendario.data) AS mes, " +
+				"IFNULL(SUM(l.valor), 0) AS totalDespesas " +
+				"FROM (SELECT MAKEDATE(" + ano + ", 1) + INTERVAL (seq.seq - 1) MONTH AS data " +
+				"FROM (SELECT 1 AS seq UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION " +
+				"SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION " +
+				"SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) seq) AS calendario " +
+				"LEFT JOIN lancamentos l ON MONTH(l.data_vencimento) = MONTH(calendario.data) " +
+				"AND YEAR(l.data_vencimento) = " + ano +" " +
+				"AND l.tipo_lancamento = 'DESPESA' " +
+				"and pessoa_id = " + pessoaId + " " +
+				"GROUP BY mes " +
+				"ORDER BY mes ";
+
+		totalList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TotalDespesasPorMesAno.class));
+
+		return totalList;
+	}
+
+	public List<GraficoTotalReceitasEDespesasPorAno> graficoTotalReceitasEDespesasPorAnos(String ano, String tokenId) {
+
+		List<GraficoTotalReceitasEDespesasPorAno> retornoList = new ArrayList<>();
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+
+		String sql = "SELECT " +
+				"MONTH(calendario.data) AS mes, " +
+				"DATE_FORMAT(calendario.data, '%b') AS mesName, " +
+				"IFNULL(SUM(CASE WHEN l.tipo_lancamento = 'DESPESA' THEN l.valor ELSE 0 END), 0) AS totalDespesas, " +
+				"IFNULL(SUM(CASE WHEN l.tipo_lancamento = 'RECEITA' THEN l.valor ELSE 0 END), 0) AS totalReceitas " +
+				"FROM " +
+				"(SELECT MAKEDATE(" + ano + ", 1) + INTERVAL (seq.seq - 1) MONTH AS data " +
+				"FROM (SELECT 1 AS seq UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION " +
+				"SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION " +
+				"SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) seq) AS calendario " +
+				"LEFT JOIN lancamentos l ON MONTH(l.data_vencimento) = MONTH(calendario.data) " +
+				"AND YEAR(l.data_vencimento) = " + ano + " " +
+				"AND l.pessoa_id = " + pessoaId + " " +
+				"GROUP BY mes, mesName " +
+				"ORDER BY mes ";
+
+		retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GraficoTotalReceitasEDespesasPorAno.class));
+
+		return retornoList;
+	}
+
+	public List<GraficoBarrasReceitaDespesaPorAno> graficoBarrasReceitaDespesaPorAnos(String ano, String tokenId) {
+
+		List<GraficoBarrasReceitaDespesaPorAno> retornoList = new ArrayList<>();
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+
+		String sql = "SELECT anos.ano, " +
+				"IFNULL(SUM(CASE WHEN l.tipo_lancamento = 'DESPESA' THEN l.valor END), 0) AS despesa, " +
+				"IFNULL(SUM(CASE WHEN l.tipo_lancamento = 'RECEITA' THEN l.valor END), 0) AS receita " +
+				"FROM (SELECT DISTINCT YEAR(data_vencimento) as ano  " +
+				"FROM lancamentos " +
+				"WHERE pessoa_id = " + pessoaId + " " +
+				") anos " +
+				"LEFT JOIN lancamentos l " +
+				"ON YEAR(l.data_vencimento) = anos.ano " +
+				"AND l.pessoa_id = " + pessoaId + " " +
+				"GROUP BY anos.ano " +
+				"ORDER BY anos.ano ";
+
+		retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GraficoBarrasReceitaDespesaPorAno.class));
+
+		return retornoList;
+	}
+
 	private String gerarChavePesquisa() {
 
 		String chavePesquisa = FuncoesUtils.gerarHash();
@@ -567,4 +680,5 @@ public class LancamentoService {
 
 		return situacaoRetorno;
 	}
+
 }
