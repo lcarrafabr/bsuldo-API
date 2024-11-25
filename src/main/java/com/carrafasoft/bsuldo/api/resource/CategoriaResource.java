@@ -1,6 +1,9 @@
 package com.carrafasoft.bsuldo.api.resource;
 
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.exception.entidadeException.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.model.Categorias;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.repository.CategoriaRepository;
@@ -15,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/categorias")
@@ -44,22 +46,26 @@ public class CategoriaResource {
 	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response,
 														 @RequestParam("tokenId") String tokenId) {
 
-		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		categoria.setPessoa(pessoaSalva);
-		
-		Categorias categoriaSalva = categoriaRepository.save(categoria);
-		publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
-		
-		return ResponseEntity.status(HttpStatus.CREATED).body(categoriaSalva);
+		try {
+			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+			categoria.setPessoa(pessoaSalva);
+
+			Categorias categoriaSalva = categoriaRepository.save(categoria);
+			publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(categoriaSalva);
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
+		}
 	}
 	
 	@GetMapping("/{codigo}")
-	public ResponseEntity<Categorias> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
-		
-		Optional<Categorias> categoriaSalva = categoriaRepository.findByIdAndPessoaId(codigo,
-				pessoaService.recuperaIdPessoaByToken(tokenId));
-		
-		return categoriaSalva.isPresent() ? ResponseEntity.ok(categoriaSalva.get()) : ResponseEntity.notFound().build();
+	public Categorias buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
+
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+		return categoriaRepository.findByIdAndPessoaId(codigo, pessoaId)
+				.orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+
 	}
 	
 	@PutMapping("/{codigo}")

@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.service;
 
+import com.carrafasoft.bsuldo.api.exception.entidadeException.CategoriaNaoEncontradaException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -29,9 +30,9 @@ public class CategoriaService {
 		categoriaRepository.save(categoriaSalva);
 	}
 	
-	private Categorias buscaPorId(Long codigo) {
+	public Categorias buscaPorId(Long codigo) {
 		
-		Categorias categoriaSalva = categoriaRepository.findById(codigo).orElseThrow(() -> new EmptyResultDataAccessException(1));
+		Categorias categoriaSalva = categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 		return categoriaSalva;
 	}
 
