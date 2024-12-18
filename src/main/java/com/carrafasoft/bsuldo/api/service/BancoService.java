@@ -3,6 +3,7 @@ package com.carrafasoft.bsuldo.api.service;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.model.Bancos;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.BancoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.repository.BancoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -28,9 +29,9 @@ public class BancoService {
     @Autowired
     private ApplicationEventPublisher publisher;
 
-    public Bancos cadastrarBanco(Bancos bancos, HttpServletResponse response, String pessoaId) {
+    public Bancos cadastrarBanco(Bancos bancos, HttpServletResponse response, String tokenId) {
 
-        Long pessoaSalvaId = pessoaService.recuperaIdPessoaByToken(pessoaId);
+        Long pessoaSalvaId = pessoaService.recuperaIdPessoaByToken(tokenId);
         Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaSalvaId);
 
         bancos.setPessoa(pessoaSalva);
@@ -52,13 +53,11 @@ public class BancoService {
         }
     }
 
-    public ResponseEntity<?> buscaBancoPorId(Long codigo, String pessoaId) {
+    public Bancos buscaBancoPorId(Long codigo, String pessoaId) {
 
         Long pessoaSalvaId = pessoaService.recuperaIdPessoaByToken(pessoaId);
         Pessoas pessoa = pessoaService.buscaPessoaPorId(pessoaSalvaId);
-        Optional<Bancos> bancoSalvo = repository.findByIdAndPessoaId(pessoaSalvaId, codigo);
-
-        return bancoSalvo.isPresent() ? ResponseEntity.ok(bancoSalvo.get()) : ResponseEntity.noContent().build();
+        return repository.findByIdAndPessoaId(pessoaSalvaId, codigo).orElseThrow(() -> new BancoNaoEncontradoException(codigo));
     }
 
     public Bancos atualizaBancoSalvo(Long codigo, Bancos banco, String pessoaId) {
@@ -89,9 +88,8 @@ public class BancoService {
         log.info("...: Status atualizado com sucesso :...");
     }
 
-    private Bancos buscaPorId(Long codigo) {
+    public Bancos buscaPorId(Long codigo) {
 
-        Bancos bancoSalvo = repository.findById(codigo).orElseThrow(() -> new EmptyResultDataAccessException(1));
-        return bancoSalvo;
+        return repository.findById(codigo).orElseThrow(() -> new BancoNaoEncontradoException(codigo));
     }
 }

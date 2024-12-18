@@ -1,4 +1,4 @@
-package com.carrafasoft.bsuldo.api.exception.entidadeException;
+package com.carrafasoft.bsuldo.api.model.exceptionmodel;
 
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 

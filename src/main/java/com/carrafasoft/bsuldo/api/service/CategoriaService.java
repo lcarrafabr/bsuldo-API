@@ -1,6 +1,6 @@
 package com.carrafasoft.bsuldo.api.service;
 
-import com.carrafasoft.bsuldo.api.exception.entidadeException.CategoriaNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.entidadeException.EntidadeEmUsoException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,11 @@ public class CategoriaService {
 		
 		Categorias categoriaSalva = buscaPorId(codigo);
 		categoriaSalva.setStatus(ativo);
-		categoriaRepository.save(categoriaSalva);
+
+		/**Como tem a anotação @Transactional. Qualquer alteração será atualizado quando o @Transactionl finalizar o gerenciamento
+		 * Seendo assim não precisa chaamr o repository.save()**/
+		//categoriaRepository.save(categoriaSalva);
+
 	}
 	
 	public Categorias buscaPorId(Long codigo) {

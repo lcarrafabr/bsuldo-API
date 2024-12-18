@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 @Getter
 @Setter
@@ -19,7 +19,7 @@ public class Bancos {
     @Column(name = "banco_id")
     private Long bancoId;
 
-    @NotNull
+    @NotBlank
     @Column(name = "nome_banco", length = 50)
     private String nomeBanco;
 

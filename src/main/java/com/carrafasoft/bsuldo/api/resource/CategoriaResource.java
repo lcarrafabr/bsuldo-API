@@ -3,7 +3,7 @@ package com.carrafasoft.bsuldo.api.resource;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
-import com.carrafasoft.bsuldo.api.exception.entidadeException.CategoriaNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.model.Categorias;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.repository.CategoriaRepository;

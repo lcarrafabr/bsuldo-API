@@ -83,17 +83,42 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 
 		BindingResult bindingResult = ex.getBindingResult();
 
-		List<Problem.Field> problemFields = bindingResult.getFieldErrors().stream()
-				.map(fieldError -> Problem.Field.builder()
-						.name(fieldError.getField())
-						.userMessage(fieldError.getDefaultMessage())
-						.build())
+
+		List<Problem.Object> problemObjects = bindingResult.getAllErrors().stream()
+				.map(objectError -> {
+
+					String message = messageSource.getMessage(objectError, LocaleContextHolder.getLocale());
+					String name = objectError.getObjectName();
+
+					if(objectError instanceof FieldError) {
+						name = ((FieldError) objectError).getField();
+					}
+
+					return Problem.Object.builder()
+							.name(name)
+							.userMessage(message)
+							.build();
+				})
 				.collect(Collectors.toList());
 
 		Problem problem = createProblemBuilder(status, problemType, detail)
 				.mensagemUsuario(detail)
-				.fields(problemFields)
+				.objects(problemObjects)
 				.build();
+
+
+
+//		List<Problem.Field> problemFields = bindingResult.getFieldErrors().stream()
+//				.map(fieldError -> Problem.Field.builder()
+//						.name(fieldError.getField())
+//						.userMessage(fieldError.getDefaultMessage())
+//						.build())
+//				.collect(Collectors.toList());
+//
+//		Problem problem = createProblemBuilder(status, problemType, detail)
+//				.mensagemUsuario(detail)
+//				.fields(problemFields)
+//				.build();
 
 		return handleExceptionInternal(ex, problem, headers, status, request);
 	}
