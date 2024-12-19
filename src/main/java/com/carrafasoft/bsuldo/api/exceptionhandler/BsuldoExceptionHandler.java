@@ -83,7 +83,6 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 
 		BindingResult bindingResult = ex.getBindingResult();
 
-
 		List<Problem.Object> problemObjects = bindingResult.getAllErrors().stream()
 				.map(objectError -> {
 
@@ -105,20 +104,6 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 				.mensagemUsuario(detail)
 				.objects(problemObjects)
 				.build();
-
-
-
-//		List<Problem.Field> problemFields = bindingResult.getFieldErrors().stream()
-//				.map(fieldError -> Problem.Field.builder()
-//						.name(fieldError.getField())
-//						.userMessage(fieldError.getDefaultMessage())
-//						.build())
-//				.collect(Collectors.toList());
-//
-//		Problem problem = createProblemBuilder(status, problemType, detail)
-//				.mensagemUsuario(detail)
-//				.fields(problemFields)
-//				.build();
 
 		return handleExceptionInternal(ex, problem, headers, status, request);
 	}

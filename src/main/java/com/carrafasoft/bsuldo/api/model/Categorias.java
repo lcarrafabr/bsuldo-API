@@ -1,6 +1,7 @@
 package com.carrafasoft.bsuldo.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,12 +10,13 @@ import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
-
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "categorias")
 public class Categorias {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "categoria_id")
 	private Long categoriaId;
@@ -32,31 +34,6 @@ public class Categorias {
 	@ManyToOne
 	@JoinColumn(name = "pessoa_id")
 	private Pessoas pessoa;
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((categoriaId == null) ? 0 : categoriaId.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Categorias other = (Categorias) obj;
-		if (categoriaId == null) {
-			if (other.categoriaId != null)
-				return false;
-		} else if (!categoriaId.equals(other.categoriaId))
-			return false;
-		return true;
-	}
 
 	@PrePersist
 	public void aoCadastrar() {

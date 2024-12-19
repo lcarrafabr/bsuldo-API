@@ -29,6 +29,7 @@ public class ControleDividendosRowMapper implements RowMapper<ControleDividendos
         controleDividendos.setValorPorCota(rs.getBigDecimal("valor_por_cota"));
         controleDividendos.setValorRecebido(rs.getBigDecimal("valor_recebido"));
         controleDividendos.setDivUtilizado(rs.getBoolean("div_utilizado"));
+        controleDividendos.setQtdCota(rs.getInt("qtdCota"));
 
         // Mapear campos de Pessoas
         Pessoas pessoa = new Pessoas();

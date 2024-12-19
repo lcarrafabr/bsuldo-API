@@ -41,7 +41,8 @@ public class DasboardInvestimentosResource {
         return retornoList;
     }
 
-    @GetMapping("/historico-proventos-futuros")
+    @GetMapping("/" +
+            "historico-proventos-futuros")
     public List<HistoricoProventosFuturos> buscaHistoricoProventosFuturos(@RequestParam("tokenId") String tokenId) {
 
         List<HistoricoProventosFuturos> response = service.buscaHistoricoProventosFuturos(tokenId);

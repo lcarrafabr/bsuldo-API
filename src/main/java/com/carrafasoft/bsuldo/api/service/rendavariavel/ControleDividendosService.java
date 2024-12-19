@@ -253,7 +253,16 @@ public class ControleDividendosService {
                 "e.data_cadastro AS emissor_data_cadastro, " +
                 "s.nome_segmento, " +
                 "s.status AS segmento_status, " +
-                "se.nome_setor " +
+                "se.nome_setor," +
+
+                "(SELECT SUM(o.quantidade_cotas) " +
+                "FROM ordens_de_compra o " +
+                "INNER JOIN produtos_renda_variavel p ON pr.produto_id = o.produto_id " +
+                "WHERE p.produto_id = c.produto_id " +
+                "AND o.data_execucao <= c.data_com " +
+                "AND o.pessoa_id = " + codigoPessoa + " " +
+                ") as qtdCota " +
+
                // "se.status AS setor_status " +
                 "FROM " +
                 "controle_dividendos c " +
