@@ -8,11 +8,17 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.LancamentoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.model.reports.*;
+import com.carrafasoft.bsuldo.api.service.CategoriaService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +47,9 @@ public class LancamentoResource {
 
 	@Autowired
 	private PessoaService pessoaService;
+
+	@Autowired
+	private CategoriaService categoriaService;
 	
 	
 	@GetMapping
@@ -52,73 +61,100 @@ public class LancamentoResource {
 										 @RequestParam(value = "situacao", required = false) String situacao,
 										 @RequestParam(value = "tipoLancamento", required = false) String tipoLancamento,
 										 @RequestParam(value = "chavePesquisa", required = false) String chavePesquisa) {
-		
-		//return lancamentoRepository.findByAllDesc(pessoaService.recuperaIdPessoaByToken(tokenId));
 
 		return lancamentoService.findByNewFilters(tokenId, descricao, dataVencimento, dataVencimentoFim,
 													metodoDeCobrancaId, chavePesquisa, situacao, tipoLancamento);
 	}
 	
-	
+
+	//@Transactional
 	@PostMapping
 	public ResponseEntity<?> cadastrarLancamento(@Valid @RequestBody Lancamentos lancamento, HttpServletResponse response,
 												 @RequestParam("tokenId") String tokenId) {
-		
-		ResponseEntity<?> retornoResponse = null;
-		Boolean existParcelamento = lancamento.getParcelado();
-		
-		if(!existParcelamento) { //Se não for parcelado entrar aqui
-			
-			retornoResponse = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response, tokenId);
-		
-		} else { // Se for parcelado entrar aqui
-			
-			retornoResponse = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response, tokenId);
+
+		try {
+
+			if(lancamento.getCategoria().getCategoriaId() == null) {
+				throw new CategoriaNaoEncontradaException("A Categoria é origatória");
+			}
+
+			if(lancamento.getMetodoDeCobranca().getMetodoCobrancaId() == null) {
+				throw new CategoriaNaoEncontradaException("A Método de cobrança é obrigatório");
+			}
+
+			ResponseEntity<?> retornoResponse = null;
+			Boolean existParcelamento = lancamento.getParcelado();
+
+			if(!existParcelamento) { //Se não for parcelado entrar aqui
+
+				retornoResponse = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response, tokenId);
+
+			} else { // Se for parcelado entrar aqui
+
+				retornoResponse = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response, tokenId);
+			}
+
+			return retornoResponse;
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
 		}
-		
-		return retornoResponse;
 	}
 	
 	
 	@GetMapping("/{codigo}")
-	public ResponseEntity<Lancamentos> buscaPorId(@PathVariable Long codigo) {
-		
-		Optional<Lancamentos> lancamentoSalvo = lancamentoRepository.findById(codigo);
-		
-		return lancamentoSalvo.isPresent() ? ResponseEntity.ok(lancamentoSalvo.get()) : ResponseEntity.notFound().build();
+	public Lancamentos buscaPorId(@PathVariable Long codigo) {
+
+		return lancamentoRepository.findById(codigo).orElseThrow(() -> new LancamentoNaoEncontradoException(codigo));
 	}
-	
+
+	@Transactional
 	@PutMapping("/{codigo}")
 	public ResponseEntity<Lancamentos> atualizaLancamentoIdividual(@PathVariable Long codigo, @Valid @RequestBody Lancamentos lancamento,
 																   @RequestParam("tokenId") String tokenId) {
 		
-		Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento, tokenId);
-		
-		return ResponseEntity.ok(lancamentoSalvo);
+		try {
+			Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento, tokenId);
+
+			return ResponseEntity.ok(lancamentoSalvo);
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
+		}
 	}
 	
 	
 	@DeleteMapping("/{codigo}")
+	@Transactional
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void removerLancamento(@PathVariable Long codigo) {
 		
 		lancamentoRepository.deleteById(codigo);
 	}
-	
+
+	@Transactional
 	@PutMapping("/{codigo}/cancelar-lancamento")
 	public ResponseEntity<Lancamentos> cancelarLancamento(@PathVariable Long codigo, @RequestBody Boolean cancelar) {
 		
-		Lancamentos lancamentoCancelado = lancamentoService.cancelarLancamento(codigo, cancelar);
-		
-		return ResponseEntity.ok(lancamentoCancelado);
+		try {
+			Lancamentos lancamentoCancelado = lancamentoService.cancelarLancamento(codigo, cancelar);
+
+			return ResponseEntity.ok(lancamentoCancelado);
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
+		}
 	}
-	
+
+	@Transactional
 	@PostMapping("/lancamento-recorrente")
 	public ResponseEntity<Lancamentos> lancamentoRecorrente(@Valid @RequestBody Lancamentos lancamentos, HttpServletResponse response,
 															@RequestParam("qtd_dias") String qtdDias,
 															@RequestParam("tokenId") String tokenId) {
 		
-		return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias, tokenId);
+		try {
+			return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias, tokenId);
+
+		}catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
+		}
 	}
 	
 	//************************************************************ RELATORIOS *****************************************************************************************************************

@@ -3,11 +3,13 @@ package com.carrafasoft.bsuldo.api.service;
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.exception.entidadeException.EntidadeEmUsoException;
 import com.carrafasoft.bsuldo.api.mail.Mailer;
 import com.carrafasoft.bsuldo.api.model.Bancos;
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.Usuarios;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.LancamentoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.model.reports.*;
 import com.carrafasoft.bsuldo.api.repository.BancoRepository;
 import com.carrafasoft.bsuldo.api.repository.LancamentoRepository;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +40,8 @@ import java.util.List;
 @Slf4j
 @Service
 public class LancamentoService {
+
+	private static final String LANCAMENTO_EM_USO = "O lançamento de código %d não pode ser removido, pois está em uso.";
 
 	@Autowired
 	private LancamentoRepository lancamentoRepository;
@@ -256,6 +261,17 @@ public class LancamentoService {
 		}
 		
 		return lancamentoRepository.save(lancamentoSalvo);
+	}
+
+	public void remover(Long lancamentoId) {
+
+		try {
+			lancamentoRepository.deleteById(lancamentoId);
+		} catch (EmptyResultDataAccessException e) {
+			throw new LancamentoNaoEncontradoException(lancamentoId);
+		} catch (DataIntegrityViolationException e) {
+			throw new EntidadeEmUsoException(String.format(LANCAMENTO_EM_USO, lancamentoId));
+		}
 	}
 	
 	public List<TotalMetodoCobranca> geraGradelancamentosPorMetodoCobranca(String dataIni, String dataFim) {

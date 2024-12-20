@@ -15,26 +15,34 @@ import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "lancamentos")
 public class Lancamentos {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "lancamento_id")
 	private Long lancamentoId;
 
 	@NotNull
+	@PositiveOrZero
 	private BigDecimal valor;
 
 	@NotNull
@@ -44,7 +52,7 @@ public class Lancamentos {
 	@Column(name = "data_pagamento")
 	private LocalDate dataPagamento;
 
-	@NotNull
+	@NotBlank
 	@Column(length = 200)
 	private String descricao;
 
@@ -93,21 +101,6 @@ public class Lancamentos {
 	@ManyToOne
 	@JoinColumn(name = "banco_id")
 	private Bancos banco;
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		Lancamentos that = (Lancamentos) o;
-
-		return lancamentoId.equals(that.lancamentoId);
-	}
-
-	@Override
-	public int hashCode() {
-		return lancamentoId.hashCode();
-	}
 
 	@PrePersist
 	public void aoCadastrar() {

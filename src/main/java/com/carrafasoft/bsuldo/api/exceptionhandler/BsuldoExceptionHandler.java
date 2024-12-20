@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.PropertyBindingException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.TransientPropertyValueException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -175,6 +176,20 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(EntidadeNaoEncontradaException.class)
 	public ResponseEntity<?> handleentidadeNaoEncontradaException(EntidadeNaoEncontradaException ex, WebRequest request) {
+
+		HttpStatus status = HttpStatus.NOT_FOUND;
+		ProblemTypeEnum problemType = ProblemTypeEnum.RECURSO_NAO_ENCONTRADO;
+		String detail = ex.getMessage();
+
+		Problem problem = createProblemBuilder(status, problemType, detail)
+				.mensagemUsuario(detail)
+				.build();
+
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+
+	@ExceptionHandler(TransientPropertyValueException.class)
+	public ResponseEntity<?> handleTransientPropertyValueException(TransientPropertyValueException ex, WebRequest request) {
 
 		HttpStatus status = HttpStatus.NOT_FOUND;
 		ProblemTypeEnum problemType = ProblemTypeEnum.RECURSO_NAO_ENCONTRADO;

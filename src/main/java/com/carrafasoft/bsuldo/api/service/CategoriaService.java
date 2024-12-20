@@ -56,4 +56,14 @@ public class CategoriaService {
 
 		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 	}
+
+	public Boolean verificaCategoriaExistente(Long codigo) {
+		try {
+			Categorias categoriaSalva = categoriaRepository.findById(codigo)
+					.orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+			return true; // Categoria encontrada
+		} catch (CategoriaNaoEncontradaException e) {
+			return false; // Categoria não encontrada
+		}
+	}
 }
