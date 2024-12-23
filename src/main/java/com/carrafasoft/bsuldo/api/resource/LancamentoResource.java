@@ -3,7 +3,6 @@ package com.carrafasoft.bsuldo.api.resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -12,6 +11,7 @@ import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.LancamentoNaoEncontradoException;
+import com.carrafasoft.bsuldo.api.model.exceptionmodel.MetodoDeCobrancaNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.model.reports.*;
 import com.carrafasoft.bsuldo.api.service.CategoriaService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
@@ -67,7 +67,7 @@ public class LancamentoResource {
 	}
 	
 
-	//@Transactional
+	@Transactional
 	@PostMapping
 	public ResponseEntity<?> cadastrarLancamento(@Valid @RequestBody Lancamentos lancamento, HttpServletResponse response,
 												 @RequestParam("tokenId") String tokenId) {
@@ -79,7 +79,7 @@ public class LancamentoResource {
 			}
 
 			if(lancamento.getMetodoDeCobranca().getMetodoCobrancaId() == null) {
-				throw new CategoriaNaoEncontradaException("A Método de cobrança é obrigatório");
+				throw new MetodoDeCobrancaNaoEncontradoException("A Método de cobrança é obrigatório");
 			}
 
 			ResponseEntity<?> retornoResponse = null;
@@ -352,7 +352,14 @@ public class LancamentoResource {
 		
 		return totalCategoriaMes;
 	}
-	
+
+
+	@GetMapping("/total-metodo-cobranca-mes")
+	public List<GradeTotalMetodoDeCobranca> totalMetodoDeCobrancas(@RequestParam("ano") String ano, @RequestParam("tokenId") String tokenId) {
+
+		return lancamentoService.geraRelatorioGradeMetodoCobrancaPorMes(ano, tokenId);
+	}
+
 	@GetMapping("/total-metodo-cob-mes")
 	public List<TotalMetodoCobrancaMes> totalPorMetodoCobrancaMes(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
 																  @RequestParam("tokenId") String tokenId) {

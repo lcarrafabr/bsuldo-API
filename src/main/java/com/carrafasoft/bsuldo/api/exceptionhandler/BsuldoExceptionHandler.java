@@ -188,6 +188,7 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 	}
 
+	//TODO //Esse não aplicou a alteração que eu queria - pensar em remover
 	@ExceptionHandler(TransientPropertyValueException.class)
 	public ResponseEntity<?> handleTransientPropertyValueException(TransientPropertyValueException ex, WebRequest request) {
 

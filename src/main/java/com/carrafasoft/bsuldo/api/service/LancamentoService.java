@@ -28,7 +28,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -606,6 +605,41 @@ public class LancamentoService {
 		return retornoList;
 	}
 
+	public List<GradeTotalMetodoDeCobranca> geraRelatorioGradeMetodoCobrancaPorMes(String ano, String tokenId) {
+
+		List<GradeTotalMetodoDeCobranca> retornoList = new ArrayList<>();
+		Long peessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+
+		String sql = "SELECT " +
+				"m.nome_metodo_cobranca AS metodoCobranca, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 1 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Jan, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 2 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Fev, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 3 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Mar, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 4 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Abr, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 5 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Mai, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 6 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Jun, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 7 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Jul, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 8 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Ago, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 9 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Setembro, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 10 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Outubro, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 11 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Nov, " +
+				"SUM(CASE WHEN MONTH(l.data_vencimento) = 12 AND YEAR(l.data_vencimento) = " + ano + " THEN l.valor ELSE 0 END) AS Dez, " +
+				"SUM(l.valor) AS total " +
+
+				"FROM lancamentos l " +
+				"LEFT JOIN metodo_de_cobranca m ON l.metodo_de_cobranca_id = m.metodo_de_cobranca_id " +
+				"WHERE l.pessoa_id = " + peessoaId +  " " +
+				"AND tipo_lancamento = 'DESPESA' " +
+				"AND YEAR(l.data_vencimento) = " + ano + "  " +
+				"GROUP BY m.nome_metodo_cobranca " +
+				"ORDER BY m.nome_metodo_cobranca ";
+
+		//retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GraficoBarrasReceitaDespesaPorAno.class));
+		retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GradeTotalMetodoDeCobranca.class));
+
+		return retornoList;
+	}
+
 	private String gerarChavePesquisa() {
 
 		String chavePesquisa = FuncoesUtils.gerarHash();
@@ -696,5 +730,4 @@ public class LancamentoService {
 
 		return situacaoRetorno;
 	}
-
 }
