@@ -1,19 +1,19 @@
 package com.carrafasoft.bsuldo.api.service.rendavariavel.dto;
 
-import com.carrafasoft.bsuldo.api.enums.TipoAtivoEnum;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.dto.*;
 import com.carrafasoft.bsuldo.api.model.reports.GridProventosRecebidosEFuturos;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.hibernate.transform.ResultTransformer;
 import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +25,9 @@ public class DashboardInvestimentosService {
 
     @Autowired
     private PessoaService pessoaService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     public List<ValorDividendosRecebidosPorMesEAno> buscaTotalDividiendosPorMesEAno(Long pessoaID) {
         // Sua consulta SQL nativa
@@ -71,6 +74,66 @@ public class DashboardInvestimentosService {
         List<ValorDividendosRecebidosPorMesEAno> resultados = query.getResultList();
 
         return resultados;
+    }
+
+    public List<ValorDividendoRecebidoPorAnoGrid> buscaValorDividendoReecebidoPorAno(String tokenId, String ano) {
+
+        Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+        //List<valorDividendoRecebidoPorAnoGrid> divsRecebidos = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder( "select year(c.data_referencia) as ano, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 1 then c.valor_recebido else 0 end) as jan, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 2 then c.valor_recebido else 0 end) as fev, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 3 then c.valor_recebido else 0 end) as mar, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 4 then c.valor_recebido else 0 end) as abr, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 5 then c.valor_recebido else 0 end) as mai, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 6 then c.valor_recebido else 0 end) as jun, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 7 then c.valor_recebido else 0 end) as jul, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 8 then c.valor_recebido else 0 end) as ago, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 9 then c.valor_recebido else 0 end) as setembro, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 10 then c.valor_recebido else 0 end) as outubro, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 11 then c.valor_recebido else 0 end) as nov, " +
+                "sum(CASE WHEN MONTH(c.data_referencia) = 12 then c.valor_recebido else 0 end) as dez, " +
+                "sum(c.valor_recebido) as total, " +
+                "sum(c.valor_recebido) / 12 as media " +
+                "from controle_dividendos c " +
+                "where c.pessoa_id = ? " +
+                "and c.tipo_div_recebimento_enum = 'RECEBIDO' ");
+
+                if (ano != null && !ano.isEmpty()) {
+                    sql.append("and year(c.data_referencia) = ? ");
+                }
+
+                sql.append("group by ano ")
+                .append("order by ano desc ");
+
+
+        List<Object> params = new ArrayList<>();
+        params.add(pessoaId);
+
+        if (ano != null && !ano.isEmpty() && !ano.equals("TODOS")) {
+            params.add(ano);
+        }
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
+            ValorDividendoRecebidoPorAnoGrid grid = new ValorDividendoRecebidoPorAnoGrid();
+            grid.setAno(rs.getString("ano"));
+            grid.setJan(rs.getBigDecimal("jan"));
+            grid.setFev(rs.getBigDecimal("fev"));
+            grid.setMar(rs.getBigDecimal("mar"));
+            grid.setAbr(rs.getBigDecimal("abr"));
+            grid.setMai(rs.getBigDecimal("mai"));
+            grid.setJun(rs.getBigDecimal("jun"));
+            grid.setJul(rs.getBigDecimal("jul"));
+            grid.setAgo(rs.getBigDecimal("ago"));
+            grid.setSetembro(rs.getBigDecimal("setembro"));
+            grid.setOutubro(rs.getBigDecimal("outubro"));
+            grid.setNov(rs.getBigDecimal("nov"));
+            grid.setDez(rs.getBigDecimal("dez"));
+            grid.setTotal(rs.getBigDecimal("total"));
+            grid.setMedia(rs.getBigDecimal("media"));
+            return grid;
+        });
     }
 
     public ValorPorAnoGridDTO buscaValorDividendosPorAno(String pessoaId) {
@@ -401,6 +464,35 @@ public class DashboardInvestimentosService {
         List<GridProventosRecebidosEFuturos> resultados = query.getResultList();
 
         return resultados;
+    }
+
+
+    public List<ListAnoDivsRecebidosFiltroGrid> comboboxAnoDivRecebidos(String tokenId) {
+
+        Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
+
+        StringBuilder sql = new StringBuilder("select year(c.data_referencia) as ano " +
+                "from controle_dividendos c " +
+                "where pessoa_id = ? " +
+                "and c.tipo_div_recebimento_enum = 'RECEBIDO' " +
+                "group by ano desc ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(pessoaId);
+
+        List<ListAnoDivsRecebidosFiltroGrid> result = jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
+
+            ListAnoDivsRecebidosFiltroGrid list = new ListAnoDivsRecebidosFiltroGrid();
+            list.setAno("TODOS");
+            list.setAno(rs.getString("ano"));
+            return list;
+        });
+
+        ListAnoDivsRecebidosFiltroGrid todosItem = new ListAnoDivsRecebidosFiltroGrid();
+        todosItem.setAno("TODOS");
+        result.add(0, todosItem);
+
+        return result;
     }
 
 

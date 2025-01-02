@@ -32,13 +32,16 @@ public class DasboardInvestimentosResource {
     }
 
     @GetMapping("/busca-valor-recebido-div-no-ano")
-    public List<ValorPorAnoGridDTO> buscaValoresDivRecebidoGrid(@RequestParam("tokenId") String tokenId) {
+    public List<ValorDividendoRecebidoPorAnoGrid> buscaValoresDivRecebidoGrid(@RequestParam("tokenId") String tokenId,
+                                                                              @RequestParam("ano") String ano) {
 
-        ValorPorAnoGridDTO retorno = service.buscaValorDividendosPorAno(tokenId);
-        List<ValorPorAnoGridDTO> retornoList = new ArrayList<>();
-        retornoList.add(retorno);
+        return service.buscaValorDividendoReecebidoPorAno(tokenId, ano);
+    }
 
-        return retornoList;
+    @GetMapping("/busca-lista-ano-filtro-dividendos-recebidos")
+    public List<ListAnoDivsRecebidosFiltroGrid> comboboxAnoFiltroDivsRecebidosGrid(@RequestParam("tokenId") String tokenId) {
+
+        return service.comboboxAnoDivRecebidos(tokenId);
     }
 
     @GetMapping("/" +

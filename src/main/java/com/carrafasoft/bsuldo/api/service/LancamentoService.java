@@ -634,7 +634,6 @@ public class LancamentoService {
 				"GROUP BY m.nome_metodo_cobranca " +
 				"ORDER BY m.nome_metodo_cobranca ";
 
-		//retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GraficoBarrasReceitaDespesaPorAno.class));
 		retornoList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(GradeTotalMetodoDeCobranca.class));
 
 		return retornoList;

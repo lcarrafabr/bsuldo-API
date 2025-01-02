@@ -4,5 +4,6 @@ public enum TipoDividendoEnum {
 
     DIVIDENDO,
     JCP,
-    REND_TRIBUTADO
+    REND_TRIBUTADO,
+    FRACOES
 }
