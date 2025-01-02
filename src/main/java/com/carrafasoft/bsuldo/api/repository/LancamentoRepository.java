@@ -340,9 +340,10 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 			value = "select  m.nome_metodo_cobranca, l.descricao, l.valor, l.situacao, concat(l.numero_parcela,'/', l.quantidade_de_parcelas) as parcela "
 					+ "from lancamentos l "
 					+ "inner join metodo_de_cobranca m on m.metodo_de_cobranca_id = l.metodo_de_cobranca_id "
-					+ "where month(l.data_vencimento) = :mes "
+					+ "where l.pessoa_id = :pessoaId " +
+					"and month(l.data_vencimento) = :mes "
 					+ "and year(l.data_vencimento) = :ano ")
-	public List<String> lancamentosPorMetodoCobranca(int mes, int ano);
+	public List<String> lancamentosPorMetodoCobranca(int mes, int ano, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select * from lancamentos where situacao in('VENCIDO', 'ATRASADO') ")

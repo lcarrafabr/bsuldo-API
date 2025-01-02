@@ -273,13 +273,14 @@ public class LancamentoService {
 		}
 	}
 	
-	public List<TotalMetodoCobranca> geraGradelancamentosPorMetodoCobranca(String dataIni, String dataFim) {
+	public List<TotalMetodoCobranca> geraGradelancamentosPorMetodoCobranca(String dataIni, String dataFim, String tokenId) {
 		
 		int mes = FuncoesUtils.converterStringParaLocalDate(dataIni).getMonthValue();
 		int ano = FuncoesUtils.converterStringParaLocalDate(dataFim).getYear();
+		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 		
 		/*************************** PRIMEIRA PARTE **********************************************************************/
-		List<String> listaString = lancamentoRepository.lancamentosPorMetodoCobranca(mes, ano);
+		List<String> listaString = lancamentoRepository.lancamentosPorMetodoCobranca(mes, ano, pessoaId);
 		List<LancamentosPorMetodoCobranca> listaLancPorCobranca = new ArrayList<LancamentosPorMetodoCobranca>();
 		
 		for (int i = 0; i < listaString.size(); i++) {
@@ -303,7 +304,7 @@ public class LancamentoService {
 		List<String> listametodoCob = lancamentoRepository.totalPorMetodoCobrancaMes(
 				FuncoesUtils.converterStringParaLocalDate(dataIni),
 				FuncoesUtils.converterStringParaLocalDate(dataFim),
-				1L //TODO colocar tokenID
+				pessoaId
 				);
 		
 		List<TotalMetodoCobrancaMes> totalMetodoCobrancaMes = new ArrayList<TotalMetodoCobrancaMes>();

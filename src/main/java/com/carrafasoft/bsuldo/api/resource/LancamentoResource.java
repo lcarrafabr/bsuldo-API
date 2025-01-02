@@ -575,13 +575,12 @@ public class LancamentoResource {
 		
 		return listaTotaisPorAno;
 	}
-	
-	
-	//public List<TotalMetodoCobranca> gradeLancamentosPorMetodoCobranca(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+
 	@GetMapping("/grade-lancamentos-por-metodo_cobranca")
-	public List<TotalMetodoCobranca> gradeLancamentosPorMetodoCobranca(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim) {
+	public List<TotalMetodoCobranca> gradeLancamentosPorMetodoCobranca(@RequestParam("dataIni") String dataIni, @RequestParam("dataFim") String dataFim,
+																	   @RequestParam("tokenId") String tokenId) {
 		
-		List<TotalMetodoCobranca> lista = lancamentoService.geraGradelancamentosPorMetodoCobranca(dataIni, dataFim);
+		List<TotalMetodoCobranca> lista = lancamentoService.geraGradelancamentosPorMetodoCobranca(dataIni, dataFim, tokenId);
 		
 		return lista;
 	}
