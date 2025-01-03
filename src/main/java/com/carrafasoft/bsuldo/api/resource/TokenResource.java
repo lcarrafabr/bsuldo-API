@@ -26,7 +26,7 @@ public class TokenResource {
 		Cookie cookie = new Cookie("refresh_token", null);
 		cookie.setHttpOnly(true);
 		cookie.setSecure(bsuldoPropertie.getSeguranca().getEnableHttps());
-		cookie.setPath(req.getContextPath() + "oauth/token");
+		cookie.setPath(req.getContextPath() + "/oauth/token");
 		cookie.setMaxAge(0);
 		
 		resp.addCookie(cookie);

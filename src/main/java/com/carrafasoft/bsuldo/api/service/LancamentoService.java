@@ -333,10 +333,9 @@ public class LancamentoService {
 		
 		for (int i = 0; i < totalMetodoCobrancaMes.size(); i++) {
 			
-			id01 = 1000L * i;
+			id01 = 1L * i;
 			id02 = id01;
-			
-			String nomeMetodoCobranca = totalMetodoCobrancaMes.get(i).getNomeMetodoCobranca();
+
 			LancamentosPorMetodoCobranca lancMetCob = new LancamentosPorMetodoCobranca();
 			List<LancamentosPorMetodoCobranca> list01 = new ArrayList<LancamentosPorMetodoCobranca>();
 			TotalMetodoCobranca totalmetodo = new TotalMetodoCobranca();
