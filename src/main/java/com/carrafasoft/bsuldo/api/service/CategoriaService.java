@@ -19,11 +19,14 @@ public class CategoriaService {
 	
 	@Autowired
 	private CategoriaRepository categoriaRepository;
+
+	@Autowired
+	private PessoaService pessoaService;
 	
 	@Transactional
-	public Categorias atualizaCategoria(Long codigo, Categorias categoria) {
+	public Categorias atualizaCategoria(String codigo, Categorias categoria,String tokenId) {
 		
-		Categorias categoriaSalva = buscaPorId(codigo);
+		Categorias categoriaSalva = verificaCategoriaExistente(codigo, tokenId);
 		BeanUtils.copyProperties(categoria, categoriaSalva, "categoriaId");
 		return categoriaRepository.save(categoriaSalva);
 	}
@@ -57,13 +60,14 @@ public class CategoriaService {
 		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 	}
 
-	public Boolean verificaCategoriaExistente(Long codigo) {
-		try {
-			Categorias categoriaSalva = categoriaRepository.findById(codigo)
-					.orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
-			return true; // Categoria encontrada
-		} catch (CategoriaNaoEncontradaException e) {
-			return false; // Categoria não encontrada
-		}
+	public Categorias buscaPorCodigoUUID(Long codigo) {
+
+		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+	}
+
+	public Categorias verificaCategoriaExistente(String codigo, String tokenId) {
+
+		return  categoriaRepository.findByIdAndPessoaId(codigo, pessoaService.recuperaIdPessoaByToken(tokenId))
+				.orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 	}
 }

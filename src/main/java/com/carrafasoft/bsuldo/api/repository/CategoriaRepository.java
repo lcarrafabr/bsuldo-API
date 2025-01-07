@@ -12,6 +12,7 @@ import com.carrafasoft.bsuldo.api.model.Categorias;
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categorias, Long>{
 
+
 	@Query(nativeQuery = true,
 	value = "select * from categorias " +
 			"where pessoa_id = :pessoaId ")
@@ -20,8 +21,8 @@ public interface CategoriaRepository extends JpaRepository<Categorias, Long>{
 	@Query(nativeQuery = true,
 	value = "select * from categorias " +
 			"where pessoa_id = :pessoaId " +
-			"and categoria_id = :codigo ")
-	Optional<Categorias> findByIdAndPessoaId(Long codigo, Long pessoaId);
+			"and codigo_categoria = :codigo ")
+	Optional<Categorias> findByIdAndPessoaId(String codigo, Long pessoaId);
 	
 	@Query(nativeQuery = true,
 			value = "select * "

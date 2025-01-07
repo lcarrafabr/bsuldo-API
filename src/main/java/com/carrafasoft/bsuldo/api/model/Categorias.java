@@ -1,15 +1,17 @@
 package com.carrafasoft.bsuldo.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "categorias")
@@ -20,6 +22,9 @@ public class Categorias {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "categoria_id")
 	private Long categoriaId;
+
+	@Column(name = "codigo_categoria", length = 36)
+	private String codigoCategoria;
 
 	@NotNull
 	@Column(name = "nome_categoria", length = 100)
@@ -40,6 +45,7 @@ public class Categorias {
 
 		status = true;
 		toUpperCase();
+		setCodigoCategoria(UUID.randomUUID().toString());
 	}
 
 	@PreUpdate

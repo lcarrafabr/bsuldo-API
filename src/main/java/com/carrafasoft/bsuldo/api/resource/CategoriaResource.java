@@ -3,6 +3,10 @@ package com.carrafasoft.bsuldo.api.resource;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.mapper.CategoriaMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.CategoriaInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.CategoriaRequestRepesentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.CategoriaResponseRepresentation;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.model.Categorias;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
@@ -35,50 +39,82 @@ public class CategoriaResource {
 
 	@Autowired
 	private PessoaService pessoaService;
-	
-	
+
+	@Autowired
+	private CategoriaMapper categoriaMapper;
+
+
+
 	@GetMapping
-	public List<Categorias> listarTodos(@RequestParam("tokenId") String tokenId) {
-		
-		return categoriaRepository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
+	public List<CategoriaResponseRepresentation> listarTodos(@RequestParam("tokenId") String tokenId) {
+
+		return categoriaMapper.categoriaResponseRepresentationMapperList(categoriaRepository.
+				findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId)));
 	}
+
 
 	@Transactional
 	@PostMapping
-	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response,
+	public ResponseEntity<CategoriaResponseRepresentation> cadastrarCategoria(@Valid @RequestBody CategoriaInputRepresentation categoriainput, HttpServletResponse response,
 														 @RequestParam("tokenId") String tokenId) {
 
 		try {
 			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+			Categorias categoria = categoriaMapper.categoriaInputRepresentationMapper(categoriainput);
 			categoria.setPessoa(pessoaSalva);
 
 			Categorias categoriaSalva = categoriaRepository.save(categoria);
 			publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(categoriaSalva);
+			return ResponseEntity.status(HttpStatus.CREATED).body(categoriaMapper.categoriaResponseRepresentationMapper(categoriaSalva));
 		} catch (EntidadeNaoEncontradaException e) {
 			throw new NegocioException(e.getMessage());
 		}
 	}
 
+//	@Transactional
+//	@PostMapping
+//	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response,
+//														 @RequestParam("tokenId") String tokenId) {
+//
+//		try {
+//			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+//			categoria.setPessoa(pessoaSalva);
+//
+//			Categorias categoriaSalva = categoriaRepository.save(categoria);
+//			publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
+//
+//			return ResponseEntity.status(HttpStatus.CREATED).body(categoriaSalva);
+//		} catch (EntidadeNaoEncontradaException e) {
+//			throw new NegocioException(e.getMessage());
+//		}
+//	}
+
+
 	@GetMapping("/{codigo}")
-	public Categorias buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
+	public CategoriaResponseRepresentation buscaPorId(@PathVariable String codigo, @RequestParam("tokenId") String tokenId) {
 
 		Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
-		return categoriaRepository.findByIdAndPessoaId(codigo, pessoaId)
-				.orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+		return categoriaMapper.categoriaResponseRepresentationMapper(categoriaService.verificaCategoriaExistente(codigo, tokenId));
 
 	}
-	
+
+
 	@PutMapping("/{codigo}")
-	public ResponseEntity<Categorias> atualizaCategoria(@PathVariable Long codigo, @Valid @RequestBody Categorias categoria,
-														@RequestParam("tokenId") String tokenId) {
+	public ResponseEntity<CategoriaResponseRepresentation> atualizaCategoria(@PathVariable String codigo,
+																			 @Valid @RequestBody CategoriaRequestRepesentation request,
+																			 @RequestParam("tokenId") String tokenId) {
 
 		try {
 			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+			Categorias categoria = categoriaMapper.categoriaRequestRepesentationMapper(request);
+
 			categoria.setPessoa(pessoaSalva);
 
-			Categorias categoriaSalva = categoriaService.atualizaCategoria(codigo, categoria);
+			CategoriaResponseRepresentation categoriaSalva = categoriaMapper.categoriaResponseRepresentationMapper(
+					categoriaService.atualizaCategoria(codigo, categoria, tokenId));
 
 			return ResponseEntity.ok(categoriaSalva);
 		} catch (CategoriaNaoEncontradaException e) {
