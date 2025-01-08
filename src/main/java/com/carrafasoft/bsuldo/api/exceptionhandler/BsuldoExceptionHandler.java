@@ -1,11 +1,5 @@
 package com.carrafasoft.bsuldo.api.exceptionhandler;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.carrafasoft.bsuldo.api.enums.ProblemTypeEnum;
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
@@ -31,11 +25,16 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
@@ -50,6 +49,8 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 			+ "com o administrador do sistema.";
 
 	private static final String DADOS_OU_CAMPOS_INVALIDOS = "Um ou mais campos estão inválidos. Faça o preenchimento correto e tente novamente.";
+
+	public static final String RECURSO_EM_USO = "Não é possível excluir um registro que está sendo usado em um outro cadastro.";
 
 	@Autowired
 	private MessageSource messageSource;
@@ -120,17 +121,17 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 //		return handleExceptionInternal(ex, erros, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
 //	}
 	
-	@ExceptionHandler({ DataIntegrityViolationException.class })
-	public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
-		
-		String mensagemUsuario = messageSource.getMessage("recurso.nao-encontrado", null, LocaleContextHolder.getLocale());
-		//String mensagemDesenvolvedor = ex.toString();
-		String mensagemDesenvolvedor = ExceptionUtils.getRootCauseMessage(ex);
-		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
-		
-		
-		return handleExceptionInternal(ex, erros, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
-	}
+//	@ExceptionHandler({ DataIntegrityViolationException.class })
+//	public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
+//
+//		String mensagemUsuario = messageSource.getMessage("recurso.nao-encontrado", null, LocaleContextHolder.getLocale());
+//		//String mensagemDesenvolvedor = ex.toString();
+//		String mensagemDesenvolvedor = ExceptionUtils.getRootCauseMessage(ex);
+//		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+//
+//
+//		return handleExceptionInternal(ex, erros, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+//	}
 
 	@ExceptionHandler({ AcompanhamentoEstrategicoExistenteException.class })
 	public ResponseEntity<Object> handleAcompanhamentoEstrategicoExistenteException(AcompanhamentoEstrategicoExistenteException ex, WebRequest request) {
@@ -183,6 +184,20 @@ public class BsuldoExceptionHandler extends ResponseEntityExceptionHandler {
 
 		Problem problem = createProblemBuilder(status, problemType, detail)
 				.mensagemUsuario(detail)
+				.build();
+
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<?> handleDataIntegrityViolationExceptionn(DataIntegrityViolationException ex, WebRequest request) {
+
+		HttpStatus status = HttpStatus.NOT_FOUND;
+		ProblemTypeEnum problemType = ProblemTypeEnum.RECURSO_NAO_ENCONTRADO;
+		String detail = ex.getMessage();
+
+		Problem problem = createProblemBuilder(status, problemType, detail)
+				.mensagemUsuario(RECURSO_EM_USO)
 				.build();
 
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);

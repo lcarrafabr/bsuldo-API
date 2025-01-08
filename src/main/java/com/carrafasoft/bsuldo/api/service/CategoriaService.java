@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CategoriaService {
 
-	private static final String CATEGORIA_EM_USO = "A categoria de código %d não pode ser removida, pois está em uso.";
+	private static final String CATEGORIA_EM_USO = "A categoria de código %s não pode ser removida, pois está em uso.";
 	
 	@Autowired
 	private CategoriaRepository categoriaRepository;
@@ -32,10 +32,10 @@ public class CategoriaService {
 	}
 
 	@Transactional
-	public void remover(Long codigo) {
+	public void remover(String codigo) {
 
 		try {
-			categoriaRepository.deleteById(codigo);
+			categoriaRepository.deleteByCodigoCategoria(codigo);
 		} catch (EmptyResultDataAccessException e) {
 			throw new CategoriaNaoEncontradaException(codigo);
 		} catch (DataIntegrityViolationException e) {
@@ -44,9 +44,9 @@ public class CategoriaService {
 	}
 
 	@Transactional
-	public void atualizarStatusAtivo(Long codigo, Boolean ativo) {
+	public void atualizarStatusAtivo(String codigo, Boolean ativo) {
 		
-		Categorias categoriaSalva = buscaPorId(codigo);
+		Categorias categoriaSalva = buscaPorCodigoUUID(codigo);
 		categoriaSalva.setStatus(ativo);
 
 		/**Como tem a anotação @Transactional. Qualquer alteração será atualizado quando o @Transactionl finalizar o gerenciamento
@@ -60,9 +60,9 @@ public class CategoriaService {
 		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 	}
 
-	public Categorias buscaPorCodigoUUID(Long codigo) {
+	public Categorias buscaPorCodigoUUID(String codigo) {
 
-		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+		return categoriaRepository.findByCodigoCategoria(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
 	}
 
 	public Categorias verificaCategoriaExistente(String codigo, String tokenId) {

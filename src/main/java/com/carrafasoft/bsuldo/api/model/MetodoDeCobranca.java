@@ -1,22 +1,30 @@
 package com.carrafasoft.bsuldo.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "metodo_de_cobranca")
 public class MetodoDeCobranca {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "metodo_de_cobranca_id")
 	private Long metodoCobrancaId;
+
+	@Column(name = "codigo_metodo_cobranca", length = 36)
+	private String codigoMetodoCobranca;
 
 	@NotNull
 	@Column(name = "nome_metodo_cobranca", length = 100)
@@ -32,36 +40,12 @@ public class MetodoDeCobranca {
 	@JoinColumn(name = "pessoa_id")
 	private Pessoas pessoa;
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((metodoCobrancaId == null) ? 0 : metodoCobrancaId.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		MetodoDeCobranca other = (MetodoDeCobranca) obj;
-		if (metodoCobrancaId == null) {
-			if (other.metodoCobrancaId != null)
-				return false;
-		} else if (!metodoCobrancaId.equals(other.metodoCobrancaId))
-			return false;
-		return true;
-	}
-
 	@PrePersist
 	public void aoCadastrar() {
 
 		status = true;
 		toUpperCase();
+		setCodigoMetodoCobranca(UUID.randomUUID().toString());
 	}
 
 	@PreUpdate

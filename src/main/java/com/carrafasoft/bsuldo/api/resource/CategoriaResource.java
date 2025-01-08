@@ -55,7 +55,8 @@ public class CategoriaResource {
 
 	@Transactional
 	@PostMapping
-	public ResponseEntity<CategoriaResponseRepresentation> cadastrarCategoria(@Valid @RequestBody CategoriaInputRepresentation categoriainput, HttpServletResponse response,
+	public ResponseEntity<CategoriaResponseRepresentation> cadastrarCategoria(@Valid @RequestBody CategoriaInputRepresentation categoriainput,
+																			  HttpServletResponse response,
 														 @RequestParam("tokenId") String tokenId) {
 
 		try {
@@ -72,24 +73,6 @@ public class CategoriaResource {
 			throw new NegocioException(e.getMessage());
 		}
 	}
-
-//	@Transactional
-//	@PostMapping
-//	public ResponseEntity<Categorias> cadastrarCategoria(@Valid @RequestBody Categorias categoria, HttpServletResponse response,
-//														 @RequestParam("tokenId") String tokenId) {
-//
-//		try {
-//			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-//			categoria.setPessoa(pessoaSalva);
-//
-//			Categorias categoriaSalva = categoriaRepository.save(categoria);
-//			publisher.publishEvent(new RecursoCriadoEvent(this, response, categoriaSalva.getCategoriaId()));
-//
-//			return ResponseEntity.status(HttpStatus.CREATED).body(categoriaSalva);
-//		} catch (EntidadeNaoEncontradaException e) {
-//			throw new NegocioException(e.getMessage());
-//		}
-//	}
 
 
 	@GetMapping("/{codigo}")
@@ -124,14 +107,14 @@ public class CategoriaResource {
 	
 	@DeleteMapping("/{codigo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void removerCategoria(@PathVariable Long codigo) {
+	public void removerCategoria(@PathVariable String codigo) {
 
 		categoriaService.remover(codigo);
 	}
 	
 	@PutMapping("/{codigo}/ativo")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
+	public void atualizaStatusAtivo(@PathVariable String codigo, @RequestBody Boolean ativo) {
 		
 		categoriaService.atualizarStatusAtivo(codigo, ativo);
 	}
@@ -139,16 +122,20 @@ public class CategoriaResource {
 	/*******************************************************************************************************************************************************/
 	
 	@GetMapping("/busca-por-nome-categoria")
-	public List<Categorias> buscaPorNomeCategoria(@RequestParam("nomeCategoria") String nomeCategoria,
+	public List<CategoriaResponseRepresentation> buscaPorNomeCategoria(@RequestParam("nomeCategoria") String nomeCategoria,
 												  @RequestParam("tokenId") String tokenId) {
 		
-		return categoriaRepository.buscaPorNomeCategoria(nomeCategoria.trim(), pessoaService.recuperaIdPessoaByToken(tokenId));
+		return categoriaMapper.categoriaResponseRepresentationMapperList(
+				categoriaRepository.buscaPorNomeCategoria(nomeCategoria.trim(), pessoaService.recuperaIdPessoaByToken(tokenId))
+		);
 	}
 	
 	@GetMapping("/busca-categorias-ativas")
-	public List<Categorias> buscaCategoriasAtivas(@RequestParam("tokenId") String tokenId) {
+	public List<CategoriaResponseRepresentation> buscaCategoriasAtivas(@RequestParam("tokenId") String tokenId) {
 		
-		return categoriaRepository.buscaCategoriasAtivas(pessoaService.recuperaIdPessoaByToken(tokenId));
+		return categoriaMapper.categoriaResponseRepresentationMapperList(
+				categoriaRepository.buscaCategoriasAtivas(pessoaService.recuperaIdPessoaByToken(tokenId))
+		);
 	}
 
 }

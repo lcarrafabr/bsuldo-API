@@ -1,11 +1,14 @@
 package com.carrafasoft.bsuldo.api.resource;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import com.carrafasoft.bsuldo.api.mapper.MetodoCobrancaMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaRequestInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaResponseRepresentation;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,58 +46,57 @@ public class MetodoDeCobrancaResource {
 
 	@Autowired
 	private PessoaService pessoaService;
+
+	@Autowired
+	private MetodoCobrancaMapper metodoCobrancaMapper;
 	
 	@GetMapping
-	public List<MetodoDeCobranca> listarTodos(@RequestParam("tokenId") String tokenId) {
+	public List<MetodoCobrancaResponseRepresentation> listarTodos(@RequestParam("tokenId") String tokenId) {
 		
-		return metodoCobrancaRepository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
+		return metodoCobrancaMapper.toListMetodoCobrancaResponseRepresentationMapper(
+				metodoCobrancaRepository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId))
+		);
 	}
-	
+
+
 	@PostMapping
-	public ResponseEntity<MetodoDeCobranca> cadastrarMetodoCobranca(@Valid @RequestBody MetodoDeCobranca metodoCobranca, HttpServletResponse response,
+	public ResponseEntity<MetodoCobrancaResponseRepresentation> cadastrarMetodoCobranca(@Valid @RequestBody MetodoCobrancaInputRepresentation metodoCobrancaInput,
+																						HttpServletResponse response,
 																	@RequestParam("tokenId") String tokenId) {
 
-		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		metodoCobranca.setPessoa(pessoaSalva);
-		
-		MetodoDeCobranca metodoCobSalvo = metodoCobrancaRepository.save(metodoCobranca);
-		publisher.publishEvent(new RecursoCriadoEvent(this, response, metodoCobSalvo.getMetodoCobrancaId()));
-		
-		return ResponseEntity.status(HttpStatus.CREATED).body(metodoCobSalvo);
+		return ResponseEntity.status(HttpStatus.CREATED).body(
+				metodoCobService.cadastrarMetodoCobranca(metodoCobrancaInput, tokenId, response)
+		);
 	}
-	
+
 	@GetMapping("/{codigo}")
-	public ResponseEntity<MetodoDeCobranca> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
-		
-		Optional<MetodoDeCobranca> metodoCobSalvo = metodoCobrancaRepository.findByIdAndPessoaId(codigo,
-				pessoaService.recuperaIdPessoaByToken(tokenId));
-		
-		return metodoCobSalvo.isPresent() ? ResponseEntity.ok(metodoCobSalvo.get()) : ResponseEntity.notFound().build();
+	public MetodoCobrancaResponseRepresentation buscaPorId(@PathVariable String codigo,
+																		   @RequestParam("tokenId") String tokenId) {
+
+		return metodoCobrancaMapper.toMetodoCobrancaResponseRepresentationMapper(
+				metodoCobService.findMetodoCobPorCodigoAndTokenId(codigo, tokenId));
 	}
 	
 	@PutMapping("/{codigo}")
-	public ResponseEntity<MetodoDeCobranca> atualizarMetodoCobranca(@PathVariable Long codigo, @Valid @RequestBody MetodoDeCobranca metodoCob,
+	public ResponseEntity<MetodoCobrancaResponseRepresentation> atualizarMetodoCobranca(@PathVariable String codigo,
+																	@Valid @RequestBody MetodoCobrancaRequestInputRepresentation metodoCob,
 																	@RequestParam("tokenId") String tokenId) {
 
-		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		metodoCob.setPessoa(pessoaSalva);
-
-		MetodoDeCobranca metodoSalvo = metodoCobService.atualizarMetodoCob(codigo, metodoCob);
-		
+		MetodoCobrancaResponseRepresentation metodoSalvo = metodoCobService.atualizarMetodoCob(codigo, metodoCob, tokenId);
 		return ResponseEntity.ok(metodoSalvo);
 	}
 	
 	@DeleteMapping("/{codigo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void removerMetodoCobranca(@PathVariable Long codigo) {
+	public void removerMetodoCobranca(@PathVariable String codigo) {
 		
-		metodoCobrancaRepository.deleteById(codigo);
+		metodoCobService.remover(codigo);
 	}
 	
 	
 	@PutMapping("{codigo}/ativo")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
+	public void atualizaStatusAtivo(@PathVariable String codigo, @RequestBody Boolean ativo) {
 		
 		metodoCobService.atualizarStatus(codigo, ativo);
 	}
@@ -102,16 +104,20 @@ public class MetodoDeCobrancaResource {
 	/*******************************************************************************************************************************************************************/
 	
 	@GetMapping("/busca-por-nome-metodo-cobranca")
-	public List<MetodoDeCobranca> buscaPorNomeMetodoCobranca(@RequestParam("nomeMetodoCobranca") String nomeMetodoCobranca) {
+	public List<MetodoCobrancaResponseRepresentation> buscaPorNomeMetodoCobranca(@RequestParam("nomeMetodoCobranca") String nomeMetodoCobranca) {
 		
-		return metodoCobrancaRepository.buscaPorNomeMetodoCobranca(nomeMetodoCobranca.trim());
+		return metodoCobrancaMapper.toListMetodoCobrancaResponseRepresentationMapper(
+				metodoCobrancaRepository.buscaPorNomeMetodoCobranca(nomeMetodoCobranca.trim())
+		);
 	}
 	
 	
 	@GetMapping("/busca-por-nome-metodo-cobranca-ativo")
-	public List<MetodoDeCobranca> buscaPorMetodoDeCobrancaAtivo(@RequestParam("tokenId") String tokenId) {
+	public List<MetodoCobrancaResponseRepresentation> buscaPorMetodoDeCobrancaAtivo(@RequestParam("tokenId") String tokenId) {
 		
-		return metodoCobrancaRepository.buscaPorNomeMetodoCobrancaAtivo(pessoaService.recuperaIdPessoaByToken(tokenId));
+		return metodoCobrancaMapper.toListMetodoCobrancaResponseRepresentationMapper(
+				metodoCobrancaRepository.buscaPorNomeMetodoCobrancaAtivo(pessoaService.recuperaIdPessoaByToken(tokenId))
+		);
 	}
 
 }

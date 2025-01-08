@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.carrafasoft.bsuldo.api.model.Categorias;
@@ -12,6 +13,8 @@ import com.carrafasoft.bsuldo.api.model.Categorias;
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categorias, Long>{
 
+
+	Optional<Categorias> findByCodigoCategoria(@Param("categoriaCodigo") String categoriaCodigo);
 
 	@Query(nativeQuery = true,
 	value = "select * from categorias " +
@@ -36,6 +39,8 @@ public interface CategoriaRepository extends JpaRepository<Categorias, Long>{
 			value = "select * from categorias where status = 1 " +
 					"and pessoa_id = :pessoaId ")
 	List<Categorias> buscaCategoriasAtivas(Long pessoaId);
+
+	void deleteByCodigoCategoria(@Param("codigoCategoria") String codigoCategoria);
 
 
 }
