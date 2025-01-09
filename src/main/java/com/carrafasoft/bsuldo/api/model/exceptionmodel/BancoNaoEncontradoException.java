@@ -4,14 +4,10 @@ import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 
 public class BancoNaoEncontradoException extends EntidadeNaoEncontradaException {
 
-    public static final String NAO_EXISTE_CADASTRO_COM_ID = "Não existe cadastro de banco com o código %d";
+    public static final String NAO_EXISTE_CADASTRO_COM_ID = "Não existe cadastro de banco com o código %s";
 
-    public BancoNaoEncontradoException(String message) {
-        super(message);
-    }
+    public BancoNaoEncontradoException(String bancoId) {
 
-    public BancoNaoEncontradoException(Long bancoId) {
-
-        this(String.format(NAO_EXISTE_CADASTRO_COM_ID, bancoId));
+        super(String.format(NAO_EXISTE_CADASTRO_COM_ID, bancoId));
     }
 }

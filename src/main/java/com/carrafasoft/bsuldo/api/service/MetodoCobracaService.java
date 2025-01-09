@@ -8,27 +8,23 @@ import com.carrafasoft.bsuldo.api.mapper.MetodoCobrancaMapper;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaInputRepresentation;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaRequestInputRepresentation;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaResponseRepresentation;
+import com.carrafasoft.bsuldo.api.model.MetodoDeCobranca;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.MetodoDeCobrancaNaoEncontradoException;
+import com.carrafasoft.bsuldo.api.repository.MetodoDeCobrancaRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import com.carrafasoft.bsuldo.api.model.MetodoDeCobranca;
-import com.carrafasoft.bsuldo.api.repository.MetodoDeCobrancaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.ConstraintViolationException;
 
 @Service
 public class MetodoCobracaService {
 
-	private static final String METODO_DE_COBRANCA_EM_USO = "M método de cobrança de código %s não pode ser removida, pois está em uso.";
+	private static final String METODO_DE_COBRANCA_EM_USO = "O método de cobrança de código %s não pode ser removido, pois está em uso.";
 	
 	@Autowired
 	private MetodoDeCobrancaRepository metodoCobrancaRepository;
@@ -90,9 +86,13 @@ public class MetodoCobracaService {
 	@Transactional
 	public void atualizarStatus(String codigo, Boolean ativo) {
 		
-		MetodoDeCobranca metodoSalvo = findCodigoMetodoCobranca(codigo);
-		metodoSalvo.setStatus(ativo);
-		metodoCobrancaRepository.save(metodoSalvo);
+		try {
+			MetodoDeCobranca metodoSalvo = findCodigoMetodoCobranca(codigo);
+			metodoSalvo.setStatus(ativo);
+			metodoCobrancaRepository.save(metodoSalvo);
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
+		}
 	}
 
 

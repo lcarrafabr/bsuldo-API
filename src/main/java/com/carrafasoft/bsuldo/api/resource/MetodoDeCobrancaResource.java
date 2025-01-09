@@ -1,35 +1,21 @@
 package com.carrafasoft.bsuldo.api.resource;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
 import com.carrafasoft.bsuldo.api.mapper.MetodoCobrancaMapper;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaInputRepresentation;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaRequestInputRepresentation;
 import com.carrafasoft.bsuldo.api.mapper.financeirodto.MetodoCobrancaResponseRepresentation;
-import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.repository.MetodoDeCobrancaRepository;
+import com.carrafasoft.bsuldo.api.service.MetodoCobracaService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
-import com.carrafasoft.bsuldo.api.model.MetodoDeCobranca;
-import com.carrafasoft.bsuldo.api.repository.MetodoDeCobrancaRepository;
-import com.carrafasoft.bsuldo.api.service.MetodoCobracaService;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/metodo-de-cobranca")

@@ -1,16 +1,18 @@
 package com.carrafasoft.bsuldo.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.UUID;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "bancos")
@@ -22,6 +24,8 @@ public class Bancos {
     @Column(name = "banco_id")
     private Long bancoId;
 
+    @Column(name = "codigo_banco", length = 36)
+    private String codigoBanco;
     @NotBlank
     @Column(name = "nome_banco", length = 50)
     private String nomeBanco;
@@ -37,7 +41,8 @@ public class Bancos {
     public void aoCadastrar() {
 
         toUppercase();
-        status = true;
+        setStatus(true);
+        setCodigoBanco(UUID.randomUUID().toString());
     }
 
     @PreUpdate

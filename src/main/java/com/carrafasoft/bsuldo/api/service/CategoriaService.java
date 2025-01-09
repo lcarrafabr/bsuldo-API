@@ -57,7 +57,7 @@ public class CategoriaService {
 	
 	public Categorias buscaPorId(Long codigo) {
 
-		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo));
+		return categoriaRepository.findById(codigo).orElseThrow(() -> new CategoriaNaoEncontradaException(codigo.toString()));
 	}
 
 	public Categorias buscaPorCodigoUUID(String codigo) {

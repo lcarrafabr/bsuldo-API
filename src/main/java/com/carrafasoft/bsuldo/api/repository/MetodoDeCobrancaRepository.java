@@ -32,7 +32,7 @@ public interface MetodoDeCobrancaRepository extends JpaRepository<MetodoDeCobran
 	@Query(nativeQuery = true,
 	value = "select * from metodo_de_cobranca " +
 			"where pessoa_id = :pessoaId ")
-	List<MetodoDeCobranca> findAllByPessoaId(Long pessoaId);
+	List<MetodoDeCobranca> findAllByPessoaId(@Param("pessoaId") Long pessoaId);
 
 	@Query(nativeQuery = true,
 	value = "select * from metodo_de_cobranca " +
@@ -44,12 +44,12 @@ public interface MetodoDeCobrancaRepository extends JpaRepository<MetodoDeCobran
 			value = "select * "
 					+ "from metodo_de_cobranca "
 					+ "where nome_metodo_cobranca like %:nomeMetodoCobranca% ")
-	public List<MetodoDeCobranca> buscaPorNomeMetodoCobranca(String nomeMetodoCobranca);
+	public List<MetodoDeCobranca> buscaPorNomeMetodoCobranca(@Param("nomeMetodoCobranca") String nomeMetodoCobranca);
 	
 	
 	@Query(nativeQuery = true,
 			value = "select * from metodo_de_cobranca "
 					+ "where pessoa_id = :pessoaId "
 					+ "and status = 1 ")
-	public List<MetodoDeCobranca> buscaPorNomeMetodoCobrancaAtivo(Long pessoaId);
+	public List<MetodoDeCobranca> buscaPorNomeMetodoCobrancaAtivo(@Param("pessoaId") Long pessoaId);
 }

@@ -2,6 +2,9 @@ package com.carrafasoft.bsuldo.api.resource;
 
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.mapper.BancoMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.BancoRequestInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.BancoResponseRepresentation;
 import com.carrafasoft.bsuldo.api.model.Bancos;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.BancoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.repository.BancoRepository;
@@ -33,71 +36,72 @@ public class BancosResource {
     @Autowired
     private PessoaService pessoaService;
 
-    @GetMapping
-    public List<Bancos> listarTodos(@RequestParam("tokenId")String tokenId) {
+    @Autowired
+    private BancoMapper bancoMapper;
 
-        return repository.findAllById(pessoaService.recuperaIdPessoaByToken(tokenId));
+    @GetMapping
+    public List<BancoResponseRepresentation> listarTodos(@RequestParam("tokenId")String tokenId) {
+
+        return bancoMapper.toListBancoResponseRepresentationMapper(
+                repository.findAllById(pessoaService.recuperaIdPessoaByToken(tokenId))
+        );
     }
 
-    @Transactional
     @PostMapping
-    public ResponseEntity<Bancos> cadastrarBanco(@RequestParam("tokenId") String tokenId, @Valid @RequestBody Bancos banco, HttpServletResponse response) {
+    public ResponseEntity<BancoResponseRepresentation> cadastrarBanco(@RequestParam("tokenId") String tokenId,
+                                                 @Valid @RequestBody BancoRequestInputRepresentation bancoInput, HttpServletResponse response) {
 
-        try {
-            Bancos bancoSalvo = service.cadastrarBanco(banco, response, tokenId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(bancoSalvo);
 
-        } catch (EntidadeNaoEncontradaException e) {
-            throw new NegocioException(e.getMessage());
-        }
-
+            Bancos bancoSalvo = service.cadastrarBanco(bancoInput, response, tokenId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    bancoMapper.toBancoResponseRepresentationMapper(bancoSalvo));
     }
 
     @GetMapping("/{codigo}")
-    public Bancos buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
+    public BancoResponseRepresentation buscaPorId(@PathVariable String codigo, @RequestParam("tokenId") String tokenId) {
 
-        return service.buscaBancoPorId(codigo, tokenId);
+        return bancoMapper.toBancoResponseRepresentationMapper(service.buscaBancoPorId(codigo, tokenId));
     }
 
-    @Transactional
     @PutMapping("/{codigo}")
-    public ResponseEntity<Bancos> atualizarBanco(@RequestParam("pessoaId") String pessoaId, @PathVariable Long codigo, @Valid @RequestBody Bancos banco) {
+    public ResponseEntity<BancoResponseRepresentation> atualizarBanco(@RequestParam("pessoaId") String pessoaId,
+                                                 @PathVariable String codigo, @Valid @RequestBody BancoResponseRepresentation banco) {
 
-        try {
-            Bancos bancoSalvo = service.atualizaBancoSalvo(codigo, banco, pessoaId);
+            BancoResponseRepresentation bancoSalvo = bancoMapper.toBancoResponseRepresentationMapper(
+                    service.atualizaBancoSalvo(codigo, banco, pessoaId));
 
             return ResponseEntity.ok(bancoSalvo);
-        } catch (BancoNaoEncontradoException e) {
-            throw new NegocioException(e.getMessage());
-        }
     }
 
-    @Transactional
     @DeleteMapping("/{codigo}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removerbanco(@PathVariable Long codigo) {
+    public void removerbanco(@PathVariable String codigo) {
 
         log.info("...: Removendo bancoId: " + codigo + " :...");
-        repository.deleteById(codigo);
+        service.remover(codigo);
     }
 
-    @Transactional
     @PutMapping("/{codigo}/ativo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
+    public void atualizaStatusAtivo(@PathVariable String codigo, @RequestBody Boolean ativo) {
 
         service.atualizaStatusAtivo(codigo, ativo);
     }
+    /********************************************************************************************************************/
 
     @GetMapping("/busca-banco-por-nome")
-    public List<Bancos> buscaBancoPorNome(@RequestParam("nomeBanco") String nomeBanco, @RequestParam("pessoaId") String pessoaId) {
+    public List<BancoResponseRepresentation> buscaBancoPorNome(@RequestParam("nomeBanco") String nomeBanco, @RequestParam("tokenId") String tokenId) {
 
-        return repository.findAllBynomeBanco(nomeBanco, pessoaService.recuperaIdPessoaByToken(pessoaId));
+        return bancoMapper.toListBancoResponseRepresentationMapper(
+                repository.findAllBynomeBanco(nomeBanco, pessoaService.recuperaIdPessoaByToken(tokenId))
+        );
     }
 
     @GetMapping("/busca-bancos-ativos")
-    public List<Bancos> buscaBancosAtivos(@RequestParam("tokenId") String tokenId) {
+    public List<BancoResponseRepresentation> buscaBancosAtivos(@RequestParam("tokenId") String tokenId) {
 
-        return repository.findByPessoaIDAndAtivos(pessoaService.recuperaIdPessoaByToken(tokenId));
+        return bancoMapper.toListBancoResponseRepresentationMapper(
+                repository.findByPessoaIDAndAtivos(pessoaService.recuperaIdPessoaByToken(tokenId))
+        );
     }
 }

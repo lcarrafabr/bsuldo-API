@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.carrafasoft.bsuldo.api.model.Pessoas;
@@ -26,5 +27,5 @@ public interface PessoaRepository extends JpaRepository<Pessoas, Long>{
 	@Query(nativeQuery = true,
 	value = "select pessoa_id from pessoas " +
 			"where pessoa_id_token = :tokenDescript ")
-    Long buscaIdPessoaByToken(String tokenDescript);
+    Long buscaIdPessoaByToken(@Param("tokenDescript") String tokenDescript);
 }
