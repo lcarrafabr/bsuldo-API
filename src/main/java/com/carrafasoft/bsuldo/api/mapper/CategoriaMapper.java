@@ -25,7 +25,7 @@ public class CategoriaMapper {
     public List<CategoriaResponseRepresentation> categoriaResponseRepresentationMapperList(List<Categorias> categorias) {
 
        return categorias.stream()
-               .map(categoria -> categoriaResponseRepresentationMapper(categoria))
+               .map(this::categoriaResponseRepresentationMapper)
                .collect(Collectors.toList());
 
     }

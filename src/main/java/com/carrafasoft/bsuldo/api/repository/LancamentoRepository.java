@@ -3,6 +3,7 @@ package com.carrafasoft.bsuldo.api.repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -16,12 +17,23 @@ import com.carrafasoft.bsuldo.api.model.Lancamentos;
 
 @Repository
 public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
+
+	Optional<Lancamentos> findByCodigoLancamento(@Param("codigoLancamento") String codigoLancamento);
+
+	void deleteByCodigoLancamento(@Param("codigoLancamento") String codigoLancamento);
 	
 	@Query(nativeQuery = true,
 			value = "select * from lancamentos " +
 					"where pessoa_id = :pessoaId " +
 					"order by lancamento_id desc ")
 	public List<Lancamentos> findByAllDesc(Long pessoaId);
+
+	@Query(nativeQuery = true,
+	value = "select * from lancamentos " +
+			"where pessoa_id = :pessoaId " +
+			"and codigo_lancamento = :codigoLancamento ")
+	Optional<Lancamentos> findByCodigoLancamentoAndPessoaId(@Param("codigoLancamento") String codigoLancamento,
+															@Param("pessoaId") Long pessoaId);
 
 
 	@Query(nativeQuery = true,
@@ -354,5 +366,4 @@ public interface LancamentoRepository extends JpaRepository<Lancamentos, Long>{
 					+ "where data_vencimento between curdate() and curdate() + 7 "
 					+ "and situacao in ('PENDENTE', 'VENCIDO', 'ATRASADO') ")
 	public List<Lancamentos> getLancamentosProximosSeteDias();
-
 }

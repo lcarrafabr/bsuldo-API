@@ -9,6 +9,9 @@ import javax.validation.Valid;
 
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.mapper.LancamentoMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.LancamentoInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.LancamentoResponseRepresentation;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.CategoriaNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.LancamentoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.MetodoDeCobrancaNaoEncontradoException;
@@ -50,86 +53,79 @@ public class LancamentoResource {
 
 	@Autowired
 	private CategoriaService categoriaService;
+
+	@Autowired
+	private LancamentoMapper lancamentoMapper;
 	
 	
 	@GetMapping
-	public List<Lancamentos> listarTodos(@RequestParam("tokenId") String tokenId,
-										 @RequestParam(value = "descricao", required = false) String descricao,
-										 @RequestParam(value = "dataVencimento", required = false) String dataVencimento,
-										 @RequestParam(value = "dataVencimentoFim", required = false) String dataVencimentoFim,
-										 @RequestParam(value = "metodoDeCobrancaId", required = false) String metodoDeCobrancaId,
-										 @RequestParam(value = "situacao", required = false) String situacao,
-										 @RequestParam(value = "tipoLancamento", required = false) String tipoLancamento,
-										 @RequestParam(value = "chavePesquisa", required = false) String chavePesquisa) {
+	public List<LancamentoResponseRepresentation> listarTodos(@RequestParam("tokenId") String tokenId,
+															  @RequestParam(value = "descricao", required = false) String descricao,
+															  @RequestParam(value = "dataVencimento", required = false) String dataVencimento,
+															  @RequestParam(value = "dataVencimentoFim", required = false) String dataVencimentoFim,
+															  @RequestParam(value = "metodoDeCobrancaId", required = false) String metodoDeCobrancaId,
+															  @RequestParam(value = "situacao", required = false) String situacao,
+															  @RequestParam(value = "tipoLancamento", required = false) String tipoLancamento,
+															  @RequestParam(value = "chavePesquisa", required = false) String chavePesquisa) {
 
-		return lancamentoService.findByNewFilters(tokenId, descricao, dataVencimento, dataVencimentoFim,
-													metodoDeCobrancaId, chavePesquisa, situacao, tipoLancamento);
+		return lancamentoMapper.toListLancamentoResponseRepresentationMapper(
+				lancamentoService.findByNewFilters(tokenId, descricao, dataVencimento, dataVencimentoFim,
+						metodoDeCobrancaId, chavePesquisa, situacao, tipoLancamento));
 	}
-	
 
-	@Transactional
+
 	@PostMapping
-	public ResponseEntity<?> cadastrarLancamento(@Valid @RequestBody Lancamentos lancamento, HttpServletResponse response,
-												 @RequestParam("tokenId") String tokenId) {
+	public ResponseEntity<LancamentoResponseRepresentation> cadastrarLancamento(@Valid @RequestBody LancamentoInputRepresentation lancamento,
+																				HttpServletResponse response,
+																				@RequestParam("tokenId") String tokenId) {
 
-		try {
+			try {
+				Lancamentos retorno = new Lancamentos();
+				Boolean existParcelamento = lancamento.getParcelado();
 
-			if(lancamento.getCategoria().getCategoriaId() == null) {
-				throw new CategoriaNaoEncontradaException("A Categoria é origatória");
+				if(!existParcelamento) { //Se não for parcelado entrar aqui
+
+					retorno = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response, tokenId);
+
+				} else { // Se for parcelado entrar aqui
+
+					retorno = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response, tokenId);
+				}
+
+				return ResponseEntity.status(HttpStatus.CREATED)
+						.body(lancamentoMapper.toLancamentoResponseRepresentationMapper(retorno));
+			} catch (EntidadeNaoEncontradaException e) {
+				throw new NegocioException(e.getMessage());
 			}
-
-			if(lancamento.getMetodoDeCobranca().getMetodoCobrancaId() == null) {
-				throw new MetodoDeCobrancaNaoEncontradoException("A Método de cobrança é obrigatório");
-			}
-
-			ResponseEntity<?> retornoResponse = null;
-			Boolean existParcelamento = lancamento.getParcelado();
-
-			if(!existParcelamento) { //Se não for parcelado entrar aqui
-
-				retornoResponse = lancamentoService.cadastrarLancamentoSemParcelamento(lancamento, response, tokenId);
-
-			} else { // Se for parcelado entrar aqui
-
-				retornoResponse = lancamentoService.cadastrarLancamentoComParcelamento(lancamento, response, tokenId);
-			}
-
-			return retornoResponse;
-		} catch (EntidadeNaoEncontradaException e) {
-			throw new NegocioException(e.getMessage());
-		}
 	}
 	
 	
 	@GetMapping("/{codigo}")
-	public Lancamentos buscaPorId(@PathVariable Long codigo) {
+	public LancamentoResponseRepresentation buscaPorId(@PathVariable String codigo) {
 
-		return lancamentoRepository.findById(codigo).orElseThrow(() -> new LancamentoNaoEncontradoException(codigo));
+		return lancamentoMapper.toLancamentoResponseRepresentationMapper(lancamentoService.findByCodigo(codigo));
 	}
 
-	@Transactional
 	@PutMapping("/{codigo}")
-	public ResponseEntity<Lancamentos> atualizaLancamentoIdividual(@PathVariable Long codigo, @Valid @RequestBody Lancamentos lancamento,
+	public ResponseEntity<LancamentoResponseRepresentation> atualizaLancamentoIdividual(@PathVariable String codigo,
+																						@Valid @RequestBody LancamentoResponseRepresentation lancamento,
 																   @RequestParam("tokenId") String tokenId) {
-		
-		try {
+
 			Lancamentos lancamentoSalvo = lancamentoService.atualizaLancamentoIdividual(codigo, lancamento, tokenId);
 
-			return ResponseEntity.ok(lancamentoSalvo);
-		} catch (EntidadeNaoEncontradaException e) {
-			throw new NegocioException(e.getMessage());
-		}
+			return ResponseEntity.ok(lancamentoMapper.toLancamentoResponseRepresentationMapper(lancamentoSalvo));
+
 	}
 	
 	
 	@DeleteMapping("/{codigo}")
-	@Transactional
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void removerLancamento(@PathVariable Long codigo) {
+	public void removerLancamento(@PathVariable String codigo) {
 		
-		lancamentoRepository.deleteById(codigo);
+		lancamentoService.deleteLancamento(codigo);
 	}
 
+	//TODO verificar se mantem esse endpoint, nunca foi usado
 	@Transactional
 	@PutMapping("/{codigo}/cancelar-lancamento")
 	public ResponseEntity<Lancamentos> cancelarLancamento(@PathVariable Long codigo, @RequestBody Boolean cancelar) {

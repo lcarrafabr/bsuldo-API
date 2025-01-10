@@ -25,7 +25,7 @@ public class MetodoCobrancaMapper {
     public List<MetodoCobrancaResponseRepresentation> toListMetodoCobrancaResponseRepresentationMapper(List<MetodoDeCobranca> metodoDeCobrancaList) {
 
         return metodoDeCobrancaList.stream()
-                .map(metodoCobranca -> toMetodoCobrancaResponseRepresentationMapper(metodoCobranca))
+                .map(this::toMetodoCobrancaResponseRepresentationMapper)
                 .collect(Collectors.toList());
     }
 

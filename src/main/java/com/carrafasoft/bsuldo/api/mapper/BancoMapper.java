@@ -24,7 +24,7 @@ public class BancoMapper {
     public List<BancoResponseRepresentation> toListBancoResponseRepresentationMapper(List<Bancos> bancosList) {
 
         return bancosList.stream()
-                .map(bancos -> toBancoResponseRepresentationMapper(bancos))
+                .map(this::toBancoResponseRepresentationMapper)
                 .collect(Collectors.toList());
     }
 

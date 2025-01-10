@@ -3,12 +3,15 @@ package com.carrafasoft.bsuldo.api.service;
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.exception.entidadeException.EntidadeEmUsoException;
 import com.carrafasoft.bsuldo.api.mail.Mailer;
-import com.carrafasoft.bsuldo.api.model.Bancos;
-import com.carrafasoft.bsuldo.api.model.Lancamentos;
-import com.carrafasoft.bsuldo.api.model.Pessoas;
-import com.carrafasoft.bsuldo.api.model.Usuarios;
+import com.carrafasoft.bsuldo.api.mapper.LancamentoMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.BancoResponseRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.LancamentoInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.LancamentoResponseRepresentation;
+import com.carrafasoft.bsuldo.api.model.*;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.LancamentoNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.model.reports.*;
 import com.carrafasoft.bsuldo.api.repository.BancoRepository;
@@ -27,11 +30,13 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +45,7 @@ import java.util.List;
 @Service
 public class LancamentoService {
 
-	private static final String LANCAMENTO_EM_USO = "O lançamento de código %d não pode ser removido, pois está em uso.";
+	private static final String LANCAMENTO_EM_USO = "O lançamento de código %s não pode ser removido, pois está em uso.";
 
 	@Autowired
 	private LancamentoRepository lancamentoRepository;
@@ -56,6 +61,18 @@ public class LancamentoService {
 
 	@Autowired
 	private BancoRepository bancoRepository;
+
+	@Autowired
+	private BancoService bancoService;
+
+	@Autowired
+	private MetodoCobracaService metodoCobracaService;
+
+	@Autowired
+	private CategoriaService categoriaService;
+
+	@Autowired
+	private LancamentoMapper lancamentoMapper;
 	
 	@Autowired
 	private Mailer mailer;
@@ -98,148 +115,177 @@ public class LancamentoService {
 		
 	}
 
-	public ResponseEntity<?> cadastrarLancamentoSemParcelamento(Lancamentos lancamento, HttpServletResponse response, String tokenId) {
 
-		ResponseEntity<Lancamentos> httpStatus = new ResponseEntity<Lancamentos>(HttpStatus.METHOD_NOT_ALLOWED);
-		String chavePesquisa = gerarChavePesquisa();
-		lancamento.setChavePesquisa(chavePesquisa);
+	@Transactional
+	public Lancamentos cadastrarLancamentoSemParcelamento(LancamentoInputRepresentation lancamento, HttpServletResponse response, String tokenId) {
 
-		Bancos banco = lancamento.getBanco();
-		if (banco != null) {
-			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
-				// Se o banco é inválido, definir banco como null
-				lancamento.setBanco(null);
+		try {
+			String chavePesquisa = gerarChavePesquisa();
+			lancamento.setChavePesquisa(chavePesquisa);
+			Bancos bancoSalvo = new Bancos();
+
+			BancoResponseRepresentation banco = lancamento.getBanco();
+			if (banco != null) {
+				if (banco.getCodigoBanco() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+					// Se o banco é inválido, definir banco como null
+					lancamento.setBanco(null);
+					bancoSalvo = null;
+				} else {
+					bancoSalvo = bancoService.buscaPorCodigoEPessoaId(lancamento.getBanco().getCodigoBanco(),tokenId);
+				}
 			}
+
+			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+			Categorias categoriaSalva = categoriaService.verificaCategoriaExistente(lancamento.getCategoria().getCodigo(), tokenId);
+			MetodoDeCobranca metodoCobSalvo = metodoCobracaService.findMetodoCobPorCodigoAndTokenId(
+					lancamento.getMetodoDeCobranca().getCodigoMetodoCobranca(), tokenId);
+
+			//Envia o input pro mapper e retorna o tipo Lancamento para salvar
+			Lancamentos lancamentoToSave = lancamentoMapper.toLancamentoMapper(
+					lancamento,categoriaSalva,metodoCobSalvo,bancoSalvo,pessoaSalva
+			);
+
+			Lancamentos lancamentoSalvo = lancamentoRepository.save(lancamentoToSave);
+			publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getLancamentoId()));
+
+			return lancamentoSalvo;
+		} catch (EntidadeNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage());
 		}
-
-		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		lancamento.setPessoa(pessoaSalva);
-
-		Lancamentos lancamentoSalvo = lancamentoRepository.save(lancamento);
-		publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getLancamentoId()));
-
-		httpStatus = ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo);
-
-		return httpStatus;
 	}
 
-	public ResponseEntity<?> cadastrarLancamentoComParcelamento(Lancamentos lancamento, HttpServletResponse response,
+
+	@Transactional
+	public Lancamentos cadastrarLancamentoComParcelamento(LancamentoInputRepresentation lancamento, HttpServletResponse response,
 																String tokenId) {
 
-		ResponseEntity<Lancamentos> httpStatus = new ResponseEntity<Lancamentos>(HttpStatus.METHOD_NOT_ALLOWED);
 		String chavePesquisa = gerarChavePesquisa();
 		lancamento.setChavePesquisa(chavePesquisa);
+		Bancos bancoSalvo = new Bancos();
 
 		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		lancamento.setPessoa(pessoaSalva);
+		Categorias categoriaSalva = categoriaService.verificaCategoriaExistente(lancamento.getCategoria().getCodigo(), tokenId);
+		MetodoDeCobranca metodoCobSalvo = metodoCobracaService.findMetodoCobPorCodigoAndTokenId(
+				lancamento.getMetodoDeCobranca().getCodigoMetodoCobranca(), tokenId);
 
-		Bancos banco = lancamento.getBanco();
+		BancoResponseRepresentation banco = lancamento.getBanco();
 		if (banco != null) {
-			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+			if (banco.getCodigoBanco() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
 				// Se o banco é inválido, definir banco como null
 				lancamento.setBanco(null);
+				bancoSalvo = null;
+			} else {
+				bancoSalvo = bancoService.buscaPorCodigoEPessoaId(lancamento.getBanco().getCodigoBanco(),tokenId);
 			}
 		}
 
 		Integer qtdParcelas = lancamento.getQuantidadeParcelas();
-		LocalDate dataPrimeiroVencimento = lancamento.getDatavencimento();
+		LocalDate dataPrimeiroVencimento = lancamento.getDataVencimento();
 		BigDecimal valorTotal = lancamento.getValor();
 
 		BigDecimal qtd = new BigDecimal(qtdParcelas);
 
-		BigDecimal valorParcelado = valorTotal.divide(qtd, 2);
+		// Divisão para calcular o valor base de cada parcela, truncando os centavos extras
+		BigDecimal valorParcelado = valorTotal.divide(qtd, 2, RoundingMode.DOWN);
+
+		// Calcula a soma total das parcelas sem o ajuste
 		BigDecimal ValorTotalparcelas = valorParcelado.multiply(qtd);
+
+		// Calcula a diferença restante a ser distribuída
 		BigDecimal valorRestante = ValorTotalparcelas.subtract(valorTotal);
 
-		// System.out.println("Quantidade parcelas: " + qtdParcela);
 		Lancamentos lancamentoSalvo2 = new Lancamentos();
 
 		for (int i = 0; i < qtdParcelas; i++) {
 
-			Lancamentos preparaSalvar = new Lancamentos();
-
 			LocalDate dataPrimeiroVencimento2 = dataPrimeiroVencimento.plusMonths(i);
-			// System.out.println(i);
 			lancamento.setNumeroParcela(i + 1);
-			lancamento.setDatavencimento(dataPrimeiroVencimento2);
+			lancamento.setDataVencimento(dataPrimeiroVencimento2);
 
 			if (valorRestante.compareTo(BigDecimal.ZERO) != 0 && lancamento.getNumeroParcela() == 1) {
-//				System.out.println("Primeira parcela");
 				BigDecimal valorPrimeiraPacela = valorParcelado.subtract(valorRestante);
 				lancamento.setValor(valorPrimeiraPacela);
-				preparaSalvar.setValor(valorPrimeiraPacela);
 
 			} else {
-
 				lancamento.setValor(valorParcelado);
-				preparaSalvar.setValor(valorParcelado);
 			}
 
-//			System.out.println(lancamento.getDatavencimento());
-//			System.out.println("Numero parcela: " + lancamento.getNumeroParcela() + "/" + qtdParcelas);
-//			System.out.println("Valor parcelado: " + lancamento.getValor());
-//			System.out.println("Valor total parcelado: " + ValorTotalparcelas);
-//			System.out.println("Valor a descontar na 1° parcela: "+ valorRestante);
-//			System.out.println("-------------------------------------------------------------------------");
+			Lancamentos lancamentosToSave = lancamentoMapper.toLancamentoMapper(
+					lancamento,categoriaSalva,metodoCobSalvo,bancoSalvo,pessoaSalva);
 
-			preparaSalvar.setDatavencimento(dataPrimeiroVencimento2);
-			preparaSalvar.setDataPagamento(lancamento.getDataPagamento());
-			preparaSalvar.setDescricao(lancamento.getDescricao());
-			preparaSalvar.setParcelado(lancamento.getParcelado());
-			preparaSalvar.setQuantidadeParcelas(lancamento.getQuantidadeParcelas());
-			preparaSalvar.setNumeroParcela(i + 1);
-			preparaSalvar.setCategoria(lancamento.getCategoria());
-			preparaSalvar.setMetodoDeCobranca(lancamento.getMetodoDeCobranca());
-			preparaSalvar.setPessoa(lancamento.getPessoa());
-			preparaSalvar.setChavePesquisa(chavePesquisa);
-			preparaSalvar.setLancRecorrente(lancamento.getLancRecorrente());
-			preparaSalvar.setTipoLancamento(lancamento.getTipoLancamento());
-			//preparaSalvar.setSituacao(situacaoRecebida);
-
-			lancamentoSalvo2 = lancamentoRepository.save(preparaSalvar);
+			lancamentoSalvo2 = lancamentoRepository.save(lancamentosToSave);
 
 		} // FIM DO FOR
 
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo2.getLancamentoId()));
-		httpStatus = ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo2);
 
-		return httpStatus;
+		return lancamentoSalvo2;
 	}
-	
-	public Lancamentos atualizaLancamentoIdividual(Long codigo, Lancamentos lancamento, String tokenId) {
-		
-		LocalDate existDataPagamento = lancamento.getDataPagamento();
 
-		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		lancamento.setPessoa(pessoaSalva);
+	@Transactional
+	public Lancamentos atualizaLancamentoIdividual(String codigo, LancamentoResponseRepresentation lancamento, String tokenId) {
 
-		Bancos banco = lancamento.getBanco();
-		if (banco != null) {
-			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
-				// Se o banco é inválido, definir banco como null
-				lancamento.setBanco(null);
+		try {
+			LocalDate existDataPagamento = lancamento.getDataPagamento();
+			Bancos bancoSalvo = new Bancos();
+
+			Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+			Categorias categoriaSalva = categoriaService.verificaCategoriaExistente(lancamento.getCategoria().getCodigo(), tokenId);
+			MetodoDeCobranca metodoCobSalvo = metodoCobracaService.findMetodoCobPorCodigoAndTokenId(
+					lancamento.getMetodoDeCobranca().getCodigoMetodoCobranca(), tokenId);
+
+			BancoResponseRepresentation banco = lancamento.getBanco();
+			if (banco != null) {
+				if (banco.getCodigoBanco() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+					// Se o banco é inválido, definir banco como null
+					lancamento.setBanco(null);
+					bancoSalvo = null;
+				}else {
+					bancoSalvo = bancoService.buscaPorCodigoEPessoaId(lancamento.getBanco().getCodigoBanco(),tokenId);
+				}
 			}
-		}
-		
-		if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.DESPESA) {
-			
-			lancamento.setSituacao(SituacaoEnum.PAGO);
-		
-		} else if (existDataPagamento == null && lancamento.getSituacao() == SituacaoEnum.VENCIDO) {
-			
-			lancamento.setSituacao(SituacaoEnum.VENCIDO);
-			
-		} else if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.RECEITA) {
-			lancamento.setSituacao(SituacaoEnum.RECEBIDO);
-		} else {
 
-			lancamento.setSituacao(SituacaoEnum.PENDENTE);
+			if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.DESPESA) {
+
+				lancamento.setSituacao(SituacaoEnum.PAGO);
+
+			} else if (existDataPagamento == null && lancamento.getSituacao() == SituacaoEnum.VENCIDO) {
+
+				lancamento.setSituacao(SituacaoEnum.VENCIDO);
+
+			} else if(existDataPagamento != null && lancamento.getTipoLancamento() == TipoLancamento.RECEITA) {
+				lancamento.setSituacao(SituacaoEnum.RECEBIDO);
+			} else {
+
+				lancamento.setSituacao(SituacaoEnum.PENDENTE);
+			}
+
+			Lancamentos lancamentoSalvo = findByCodigoLancamentoAndPessoaId(lancamento.getCodigoLancamento(), tokenId);
+
+			//Verificar se aqui precisa ser corrigido****************
+			lancamentoSalvo.setBanco(bancoSalvo);
+			lancamentoSalvo.setCategoria(categoriaSalva);
+			lancamentoSalvo.setPessoa(pessoaSalva);
+			//*********************************************************
+
+			BeanUtils.copyProperties(lancamento, lancamentoSalvo, "lancamentoId");
+
+			return lancamentoRepository.save(lancamentoSalvo);
+		} catch (LancamentoNaoEncontradoException e) {
+			throw new NegocioException(e.getMessage());
 		}
-		
-		Lancamentos lancamentoSalvo = buscaPorId(codigo);
-		BeanUtils.copyProperties(lancamento, lancamentoSalvo, "lancamentoId");
-		
-		return lancamentoRepository.save(lancamentoSalvo);
+	}
+
+	@Transactional
+	public void deleteLancamento(String codigoLancamento) {
+
+		try {
+			lancamentoRepository.deleteByCodigoLancamento(codigoLancamento);
+		} catch (EmptyResultDataAccessException e) {
+			throw new LancamentoNaoEncontradoException(codigoLancamento);
+		} catch (DataIntegrityViolationException e) {
+			throw new EntidadeEmUsoException(String.format(LANCAMENTO_EM_USO, codigoLancamento));
+		}
 	}
 	
 	public Lancamentos cancelarLancamento(Long codigo, Boolean cancelar) {
@@ -267,7 +313,7 @@ public class LancamentoService {
 		try {
 			lancamentoRepository.deleteById(lancamentoId);
 		} catch (EmptyResultDataAccessException e) {
-			throw new LancamentoNaoEncontradoException(lancamentoId);
+			throw new LancamentoNaoEncontradoException(lancamentoId.toString());
 		} catch (DataIntegrityViolationException e) {
 			throw new EntidadeEmUsoException(String.format(LANCAMENTO_EM_USO, lancamentoId));
 		}
@@ -639,6 +685,12 @@ public class LancamentoService {
 		return retornoList;
 	}
 
+	public Lancamentos findByCodigo(String codigoLancamento) {
+
+		return lancamentoRepository.findByCodigoLancamento(codigoLancamento)
+				.orElseThrow(() -> new LancamentoNaoEncontradoException(codigoLancamento));
+	}
+
 	private String gerarChavePesquisa() {
 
 		String chavePesquisa = FuncoesUtils.gerarHash();
@@ -651,6 +703,12 @@ public class LancamentoService {
 		}
 
 		return chavePesquisa;
+	}
+
+	public Lancamentos findByCodigoLancamentoAndPessoaId(String codigoLancamento, String tokenId) {
+
+		return lancamentoRepository.findByCodigoLancamentoAndPessoaId(codigoLancamento, pessoaService.recuperaIdPessoaByToken(tokenId))
+				.orElseThrow(() -> new LancamentoNaoEncontradoException(codigoLancamento));
 	}
 	
 	private Lancamentos buscaPorId(Long codigo) {

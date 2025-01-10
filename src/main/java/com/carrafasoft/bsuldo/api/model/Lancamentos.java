@@ -2,6 +2,7 @@ package com.carrafasoft.bsuldo.api.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -23,13 +24,12 @@ import javax.validation.constraints.PositiveOrZero;
 import com.carrafasoft.bsuldo.api.enums.SituacaoEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoLancamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "lancamentos")
@@ -40,6 +40,9 @@ public class Lancamentos {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "lancamento_id")
 	private Long lancamentoId;
+
+	@Column(name = "codigo_lancamento", length = 36)
+	private String codigoLancamento;
 
 	@NotNull
 	@PositiveOrZero
@@ -115,6 +118,7 @@ public class Lancamentos {
 		} else {
 			situacao = SituacaoEnum.PENDENTE;
 		}
+		setCodigoLancamento(UUID.randomUUID().toString());
 
 	}
 
