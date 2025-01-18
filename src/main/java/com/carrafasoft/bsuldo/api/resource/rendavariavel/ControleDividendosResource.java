@@ -119,6 +119,7 @@ public class ControleDividendosResource {
         return totalDivDisp;
     }
 
+    //TODO não lembro desse endpoint verificar ele, no dashboard investimentos tem o dados-dividendos-por-mes-e-ano que não mostra nada
     @GetMapping("/dados-dividendos-por-mes-e-ano")
     public List<GraficoDividendosRecebidosPorMesEAno> getDadosGraficoDivMesEAno(@RequestParam("idToken") String idToken,
                                                                                 @RequestParam("ano") String ano,

@@ -29,13 +29,14 @@ public class DashboardInvestimentosService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    //TODO Corrigir a grid de total de Dividendos recebidos adicionar Param Data(ano) e refazer a querie para trazer o ano todo (mesmo zerado)
     public List<ValorDividendosRecebidosPorMesEAno> buscaTotalDividiendosPorMesEAno(Long pessoaID) {
         // Sua consulta SQL nativa
         String sql = "select data_referencia as dataReferencia, " +
                 "sum(valor_recebido) as valorRecebido " +
                 "from controle_dividendos " +
                 "where tipo_div_recebimento_enum = 'RECEBIDO' " +
-                "and year(data_referencia) = '2024' " +
+                "and year(data_referencia) = '2025' " +
                 "and pessoa_id = " + pessoaID + " " +
                 "group by data_referencia " +
                 "order by data_referencia asc ";

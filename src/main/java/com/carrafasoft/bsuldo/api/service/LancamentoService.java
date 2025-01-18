@@ -420,19 +420,26 @@ public class LancamentoService {
 	}
 	
 	
-	public ResponseEntity<Lancamentos> gerarLancamentoRecorrente(@Valid Lancamentos lancamentos, HttpServletResponse response,
+	public Lancamentos gerarLancamentoRecorrente(@Valid LancamentoInputRepresentation lancamentos, HttpServletResponse response,
 																 String qtdDias, String tokenId) {
 
 		Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-		lancamentos.setPessoa(pessoaSalva);
 
 		log.info("...: Iniciando lançamento recorrente para o usuárioID: {} :...", pessoaSalva.getPessoaID());
 
-		Bancos banco = lancamentos.getBanco();
+		Categorias categoriaSalva = categoriaService.verificaCategoriaExistente(lancamentos.getCategoria().getCodigo(), tokenId);
+		MetodoDeCobranca metodoCobSalvo = metodoCobracaService.findMetodoCobPorCodigoAndTokenId(
+				lancamentos.getMetodoDeCobranca().getCodigoMetodoCobranca(), tokenId);
+
+		BancoResponseRepresentation banco = lancamentos.getBanco();
+		Bancos bancoSalvo = new Bancos();
 		if (banco != null) {
-			if (banco.getBancoId() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
+			if (banco.getCodigoBanco() == null && (banco.getNomeBanco() == null || banco.getNomeBanco().isEmpty())) {
 				// Se o banco é inválido, definir banco como null
 				lancamentos.setBanco(null);
+				bancoSalvo = null;
+			}else {
+				bancoSalvo = bancoService.buscaPorCodigoEPessoaId(lancamentos.getBanco().getCodigoBanco(),tokenId);
 			}
 		}
 		
@@ -460,13 +467,16 @@ public class LancamentoService {
 			//preparaSalvar = lancamentos;
 			
 			if(i == 0) {
+
+				Lancamentos lancamentoToSave = lancamentoMapper.toLancamentoMapper(
+						lancamentos, categoriaSalva,metodoCobSalvo,bancoSalvo,pessoaSalva);
 				
-				lancamentoSalvo = lancamentoRepository.save(lancamentos);
+				lancamentoSalvo = lancamentoRepository.save(lancamentoToSave);
 				publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getLancamentoId()));
 				
 			} else {
 				
-				preparaSalvar.setDatavencimento(lancamentos.getDatavencimento().plusMonths(i));
+				preparaSalvar.setDatavencimento(lancamentos.getDataVencimento().plusMonths(i));
 				
 				preparaSalvar.setValor(lancamentos.getValor());
 				preparaSalvar.setDataPagamento(lancamentos.getDataPagamento());
@@ -474,9 +484,9 @@ public class LancamentoService {
 				preparaSalvar.setParcelado(lancamentos.getParcelado());
 				preparaSalvar.setQuantidadeParcelas(lancamentos.getQuantidadeParcelas());
 				preparaSalvar.setNumeroParcela(1);
-				preparaSalvar.setCategoria(lancamentos.getCategoria());
-				preparaSalvar.setMetodoDeCobranca(lancamentos.getMetodoDeCobranca());
-				preparaSalvar.setPessoa(lancamentos.getPessoa());
+				preparaSalvar.setCategoria(categoriaSalva);
+				preparaSalvar.setMetodoDeCobranca(metodoCobSalvo);
+				preparaSalvar.setPessoa(pessoaSalva);
 				preparaSalvar.setChavePesquisa(chavePesquisa);
 				preparaSalvar.setLancRecorrente(lancRecorrente);
 				preparaSalvar.setTipoLancamento(lancamentos.getTipoLancamento());
@@ -486,7 +496,7 @@ public class LancamentoService {
 			}
 		}
 		log.info("...: Lançamento recorrente cadastrado com sucesso. :...");
-		return ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo);
+		return lancamentoSalvo;
 	}
 
 	public List<Lancamentos> findByNewFilters(String tokenId, String descricao, String dataVencimento,

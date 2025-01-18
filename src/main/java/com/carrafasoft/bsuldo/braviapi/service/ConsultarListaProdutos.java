@@ -20,7 +20,7 @@ public class ConsultarListaProdutos {
     private static final String LISTA_PRODUTOS_LINK = "https://brapi.dev/api/quote/list";
 
     public static ProdutosList ConsultaListaProdutos() {
-        StringBuilder jsonCotas = new StringBuilder();
+        StringBuilder jsonResponse = new StringBuilder();
         ProdutosList results = new ProdutosList();
 
         try {
@@ -29,16 +29,16 @@ public class ConsultarListaProdutos {
             InputStream is = connection.getInputStream();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            String cotas;
+            String item;
 
-            while ((cotas = br.readLine()) != null) {
-                jsonCotas.append(cotas);
+            while ((item = br.readLine()) != null) {
+                jsonResponse.append(item);
             }
 
             // Verifica se o JSON está vazio
-            if (jsonCotas.length() > 0) {
+            if (jsonResponse.length() > 0) {
                 Gson gson = new Gson();
-                results = gson.fromJson(jsonCotas.toString(), ProdutosList.class);
+                results = gson.fromJson(jsonResponse.toString(), ProdutosList.class);
             } else {
                 System.out.println("O JSON retornado está vazio.");
             }

@@ -139,18 +139,16 @@ public class LancamentoResource {
 		}
 	}
 
-	@Transactional
 	@PostMapping("/lancamento-recorrente")
-	public ResponseEntity<Lancamentos> lancamentoRecorrente(@Valid @RequestBody Lancamentos lancamentos, HttpServletResponse response,
+	public ResponseEntity<LancamentoResponseRepresentation> lancamentoRecorrente(@Valid @RequestBody LancamentoInputRepresentation lancamentos,
+																				 HttpServletResponse response,
 															@RequestParam("qtd_dias") String qtdDias,
 															@RequestParam("tokenId") String tokenId) {
-		
-		try {
-			return lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias, tokenId);
 
-		}catch (EntidadeNaoEncontradaException e) {
-			throw new NegocioException(e.getMessage());
-		}
+
+			Lancamentos lancamentoRetorno = lancamentoService.gerarLancamentoRecorrente(lancamentos, response, qtdDias, tokenId);
+			return ResponseEntity.status(HttpStatus.CREATED).body(
+					lancamentoMapper.toLancamentoResponseRepresentationMapper(lancamentoRetorno));
 	}
 	
 	//************************************************************ RELATORIOS *****************************************************************************************************************
@@ -168,7 +166,8 @@ public class LancamentoResource {
 	}
 	
 	@GetMapping("/pesquisa-por-data_ini_fim-vencimento")
-	public List<Lancamentos> buscaPorDataVencimentoIniFim(@RequestParam("vencimentoInicio") String vencimentoInicio, @RequestParam("vencimentoFim")  String vencimentoFim) {
+	public List<Lancamentos> buscaPorDataVencimentoIniFim(@RequestParam("vencimentoInicio") String vencimentoInicio,
+														  @RequestParam("vencimentoFim")  String vencimentoFim) {
 		
 		return lancamentoRepository.buscaPorDataVencimentoDataIniDataFim(
 				FuncoesUtils.converterStringParaLocalDate(vencimentoInicio), 

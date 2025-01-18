@@ -1,5 +1,11 @@
 package com.carrafasoft.bsuldo.api.resource.rendavariavel;
 
+import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.mapper.SegmentoMapper;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.SegmentoInputRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.SegmentoInputUpdateRepresentation;
+import com.carrafasoft.bsuldo.api.mapper.financeirodto.SegmentoResponseRepresentation;
 import com.carrafasoft.bsuldo.api.model.rendavariavel.Segmentos;
 import com.carrafasoft.bsuldo.api.repository.rendavariavel.SegmentosRepository;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
@@ -27,46 +33,54 @@ public class SegmentosResource {
     @Autowired
     private PessoaService pessoaService;
 
-    @GetMapping
-    public List<Segmentos> findAll(@RequestParam("tokenId") String tokenId) {
+    @Autowired
+    private SegmentoMapper segmentoMapper;
 
-        return repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId));
+    @GetMapping
+    public List<SegmentoResponseRepresentation> findAll(@RequestParam("tokenId") String tokenId) {
+
+        return segmentoMapper.toListSegmentoResponseRepresentationMapper(
+                repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId))
+        );
     }
 
     @PostMapping
-    public ResponseEntity<Segmentos> cadastrarSegmento(@Valid @RequestBody Segmentos segmento,
-            @RequestParam("tokenId") String tokenId,HttpServletResponse response) {
+    public ResponseEntity<SegmentoResponseRepresentation> cadastrarSegmento(@Valid @RequestBody SegmentoInputRepresentation segmento,
+                                                       @RequestParam("tokenId") String tokenId,HttpServletResponse response) {
 
-        return service.cadastrarSegmento(segmento, response, tokenId);
+        SegmentoResponseRepresentation segmentoResponse = service.cadastrarSegmento(segmento,response ,tokenId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(segmentoResponse);
     }
 
+
     @GetMapping("/{codigo}")
-    public ResponseEntity<Segmentos> buscaPorId(@PathVariable Long codigo, @RequestParam("tokenId") String tokenId) {
+    public SegmentoResponseRepresentation buscaPorId(@PathVariable String codigo, @RequestParam("tokenId") String tokenId) {
 
-        Optional<Segmentos> segmentoSalvo = repository.findByIdAndPessoaId(codigo, pessoaService.recuperaIdPessoaByToken(tokenId));
+        Segmentos segmentoSalvo = service.findByCodigoSegmentoAndTokenId(codigo, tokenId);
 
-        return segmentoSalvo.isPresent() ? ResponseEntity.ok(segmentoSalvo.get()) : ResponseEntity.notFound().build();
+        return segmentoMapper.toSegmentoResponseRepresentationMapper(segmentoSalvo);
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<Segmentos> atualizarSegmento(@PathVariable Long codigo, @Valid @RequestBody Segmentos segmento,
+    public ResponseEntity<SegmentoResponseRepresentation> atualizarSegmento(@PathVariable String codigo,
+                                                                            @Valid @RequestBody SegmentoInputUpdateRepresentation segmento,
                                                        @RequestParam("tokenId") String tokenId) {
 
-        Segmentos segmentoSalvo = service.atualizarSegmento(codigo, segmento, tokenId);
+        SegmentoResponseRepresentation segmentoSalvo = service.atualizarSegmento(codigo, segmento, tokenId);
 
         return ResponseEntity.ok(segmentoSalvo);
     }
 
     @DeleteMapping("/{codigo}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removerSegmento(@PathVariable Long codigo) {
+    public void removerSegmento(@PathVariable String codigo) {
 
-        repository.deleteById(codigo);
+        service.removerSegmento(codigo);
     }
 
     @PutMapping("/{codigo}/ativo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void atualizaStatusAtivo(@PathVariable Long codigo, @RequestBody Boolean ativo) {
+    public void atualizaStatusAtivo(@PathVariable String codigo, @RequestBody Boolean ativo) {
 
         service.atualizaStatusAtivo(codigo, ativo);
     }
@@ -74,6 +88,10 @@ public class SegmentosResource {
     @GetMapping("/segmentos-ativos")
     public List<Segmentos> buscaSegmentosAtivos(@RequestParam("tokenId") String tokenId) {
 
-        return repository.buscaSegmentosAtivos(pessoaService.recuperaIdPessoaByToken(tokenId));
+        try {
+            return repository.buscaSegmentosAtivos(pessoaService.recuperaIdPessoaByToken(tokenId));
+        } catch (EntidadeNaoEncontradaException e) {
+            throw new NegocioException(e.getMessage());
+        }
     }
 }

@@ -2,23 +2,30 @@ package com.carrafasoft.bsuldo.api.model.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "segmentos")
 public class Segmentos {
 
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "segmento_id")
     private Long segmentoId;
+
+    @Column(name = "codigo_segmento", length = 36)
+    private String codigoSegmento;
 
     @NotNull
     @Column(name = "nome_segmento", length = 100)
@@ -34,6 +41,7 @@ public class Segmentos {
     @PrePersist
     public void aoCadastrar() {
         toUpperCase();
+        setCodigoSegmento(UUID.randomUUID().toString());
     }
 
     @PreUpdate
