@@ -19,7 +19,7 @@ import org.thymeleaf.context.Context;
 
 import com.carrafasoft.bsuldo.api.model.Lancamentos;
 import com.carrafasoft.bsuldo.api.model.Usuarios;
-import com.carrafasoft.bsuldo.api.resource.CategoriaResource;
+import com.carrafasoft.bsuldo.api.controller.CategoriaResource;
 
 @Component
 public class Mailer {

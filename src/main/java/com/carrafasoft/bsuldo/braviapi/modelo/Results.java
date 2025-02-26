@@ -1,7 +1,12 @@
 package com.carrafasoft.bsuldo.braviapi.modelo;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class Results {
 
     private List<Stoks> results;
@@ -9,27 +14,5 @@ public class Results {
     private String took;
 
 
-    public List<Stoks> getResults() {
-        return results;
-    }
 
-    public void setResults(List<Stoks> results) {
-        this.results = results;
-    }
-
-    public String getRequestedAt() {
-        return requestedAt;
-    }
-
-    public void setRequestedAt(String requestedAt) {
-        this.requestedAt = requestedAt;
-    }
-
-    public String getTook() {
-        return took;
-    }
-
-    public void setTook(String took) {
-        this.took = took;
-    }
 }
