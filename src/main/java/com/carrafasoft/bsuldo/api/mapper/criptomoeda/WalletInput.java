@@ -5,19 +5,19 @@ import com.carrafasoft.bsuldo.api.enums.TipoCarteiraEnum;
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class WalletResponse {
+public class WalletInput {
 
-    private String codigoWallet;
+    @NotBlank
     private String nomeCarteira;
+
+    @NotNull
     private TipoCarteiraEnum tipoCarteira;
-    private BigDecimal saldo;
-    private Boolean status;
-    private LocalDateTime dataCriacao;
-    private LocalDateTime dataUltimaAtualizacao;
+
+    @NotNull
     private OrigemResponse origem;
 }

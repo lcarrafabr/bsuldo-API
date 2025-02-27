@@ -17,4 +17,6 @@ public interface OrigemService {
     void removerOrigem(String codigoOrigem);
 
     void atualizaStatusAtivo(String codigoOrigem, Boolean ativo);
+
+    Origens findByCodigoOrigem(String codigoOrigem);
 }

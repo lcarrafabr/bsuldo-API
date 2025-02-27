@@ -1,14 +1,16 @@
 package com.carrafasoft.bsuldo.api.model.criptomoedas;
 
-import com.carrafasoft.bsuldo.api.enums.MoedaEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoCarteiraEnum;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -26,22 +28,17 @@ public class Wallets {
     private Long walletId;
 
     @NotBlank
-    @Column(name = "codigo_wallet", length = 36)
+    @Column(name = "codigo_wallet", length = 36, updatable = false)
     private String codigoWallet;
 
     @NotBlank
     @Column(name = "nome_carteira", length = 80)
     private String nomeCarteira;
 
-    @NotBlank
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_carteira", length = 8)
     private TipoCarteiraEnum tipoCarteira;
-
-    @NotBlank
-    @Enumerated(EnumType.STRING)
-    @Column(length = 10)
-    private MoedaEnum moeda;
 
     private Boolean status;
 
@@ -59,6 +56,9 @@ public class Wallets {
     @JoinColumn(name = "origem_id")
     private Origens origem;
 
+    @Transient
+    private BigDecimal saldo;
+
     @PrePersist
     public void aoCadastrar() {
 
@@ -66,6 +66,7 @@ public class Wallets {
         setStatus(true);
         setDataCriacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         setDataUltimaAtualizacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
+        setCodigoWallet(UUID.randomUUID().toString());
     }
 
     @PreUpdate

@@ -1,7 +1,10 @@
 package com.carrafasoft.bsuldo.api.mapper;
 
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemResponse;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
+import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +21,7 @@ public class WalletMapper {
                 .codigoWallet(wallet.getCodigoWallet())
                 .nomeCarteira(wallet.getNomeCarteira())
                 .tipoCarteira(wallet.getTipoCarteira())
-                .moeda(wallet.getMoeda())
-                .saldo(BigDecimal.ZERO.setScale(5))
+                .saldo(BigDecimal.ZERO.setScale(5))//TODO incluir calculo de saldo
                 .status(wallet.getStatus())
                 .dataCriacao(wallet.getDataCriacao())
                 .dataUltimaAtualizacao(wallet.getDataUltimaAtualizacao())
@@ -32,6 +34,16 @@ public class WalletMapper {
         return walletsList.stream()
                 .map(this::toWalletResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Wallets toWalletModel(WalletInput walletInput, Origens origens, Pessoas pessoas) {
+
+        return Wallets.builder()
+                .nomeCarteira(walletInput.getNomeCarteira())
+                .tipoCarteira(walletInput.getTipoCarteira())
+                .pessoa(pessoas)
+                .origem(origens)
+                .build();
     }
 
     private OrigemResponse getOrigemResponse(Wallets wallet) {
