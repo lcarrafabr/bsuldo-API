@@ -65,4 +65,18 @@ public class OrigensController {
 
         return ResponseEntity.ok(mapper.toOriremResponse(origemAtualizado));
     }
+
+    @DeleteMapping("/{codigoOrigem}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removerOrigem(@PathVariable String codigoOrigem) {
+
+        service.removerOrigem(codigoOrigem);
+    }
+
+    @PutMapping("/{codigoOrigem}/ativo")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void atualizaStatusAtivo(@PathVariable String codigoOrigem, @RequestBody Boolean ativo) {
+
+        service.atualizaStatusAtivo(codigoOrigem, ativo);
+    }
 }

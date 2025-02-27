@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,5 +83,37 @@ public class OrigemServiceImpl implements OrigemService {
         } catch (OrigemNaoEncontradaException e) {
             throw new NegocioException(e.getMessage());
         }
+    }
+
+    @Transactional
+    @Override
+    public void removerOrigem(String codigoOrigem) {
+
+        try {
+            repository.deleteByCodigoOrigem(codigoOrigem);
+        } catch (EmptyResultDataAccessException e) {
+            throw new OrigemNaoEncontradaException(codigoOrigem);
+        } catch (DataIntegrityViolationException e) {
+            throw new EntidadeNaoEncontradaException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    @Override
+    public void atualizaStatusAtivo(String codigoOrigem, Boolean ativo) {
+
+        try {
+            Origens origemSalva = findByCodigoOrigem(codigoOrigem);
+            origemSalva.setStatusAtivo(ativo);
+            repository.save(origemSalva);
+        } catch (EntidadeNaoEncontradaException e) {
+            throw new NegocioException(e.getMessage());
+        }
+
+    }
+
+    public Origens findByCodigoOrigem(String codigoOrigem){
+
+        return repository.findByCodigoOrigem(codigoOrigem).orElseThrow(() -> new OrigemNaoEncontradaException(codigoOrigem));
     }
 }

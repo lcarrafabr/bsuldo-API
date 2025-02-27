@@ -17,7 +17,7 @@ public class OrigenMapper {
         return OrigemResponse.builder()
                 .codigoOrigem(origen.getCodigoOrigem())
                 .nomeOrigem(origen.getNomeOrigem())
-                .dataUltimaAtualizacao(origen.getDataUltimaAtualizacao())
+                .status(origen.getStatusAtivo())
                 .build();
     }
 

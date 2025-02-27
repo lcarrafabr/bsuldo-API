@@ -17,4 +17,11 @@ public interface OrigemRepository extends JpaRepository<Origens, Long> {
             "and pessoa_id = :pessoaId ")
     Optional<Origens> findByCodigoOrigemAndPessoaId(@Param("codigoOrigem")String codigoOrigem,
                                                     @Param("pessoaId") Long pessoaId);
+
+    void deleteByCodigoOrigem(@Param("codigoOrigem") String codigoOrigem);
+
+    @Query(nativeQuery = true,
+    value = "select * from origens " +
+            "where codigo_origem = :codigoOrigem ")
+    Optional<Origens> findByCodigoOrigem(@Param("codigoOrigem") String codigoOrigem);
 }

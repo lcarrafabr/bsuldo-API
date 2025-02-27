@@ -13,4 +13,8 @@ public interface OrigemService {
     Origens cadastrarOrigem(OrigemInput origemInput, String tokenId, HttpServletResponse response);
 
     Origens atualizarOrigem(String codigoOrigem, OrigemInput origemInput, String tokenId);
+
+    void removerOrigem(String codigoOrigem);
+
+    void atualizaStatusAtivo(String codigoOrigem, Boolean ativo);
 }
