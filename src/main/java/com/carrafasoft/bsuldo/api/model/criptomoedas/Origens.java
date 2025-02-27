@@ -33,7 +33,8 @@ public class Origens {
     @Column(name = "nome_origem", length = 80)
     private String nomeOrigem;
 
-    @NotNull
+    private Boolean statusAtivo;
+
     @Column(name = "data_ultima_atualizacao")
     private LocalDateTime dataUltimaAtualizacao;
 
@@ -47,6 +48,7 @@ public class Origens {
         toUperCase();
         setDataUltimaAtualizacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         setCodigoOrigem(UUID.randomUUID().toString());
+        setStatusAtivo(true);
     }
 
     @PreUpdate
@@ -58,6 +60,6 @@ public class Origens {
 
     private void toUperCase() {
 
-        setNomeOrigem(getCodigoOrigem().trim().toUpperCase());
+        setNomeOrigem(nomeOrigem.toUpperCase().trim());
     }
 }
