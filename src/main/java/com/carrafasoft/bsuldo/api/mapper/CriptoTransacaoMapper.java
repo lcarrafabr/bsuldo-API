@@ -1,8 +1,10 @@
 package com.carrafasoft.bsuldo.api.mapper;
 
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
+import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.CriptoTransacao;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
@@ -36,6 +38,19 @@ public class CriptoTransacaoMapper {
                 .collect(Collectors.toList());
     }
 
+    public CriptoTransacao toCriptoTransacaoModel(CriptoTransacaoInput transacaoInput, Pessoas pessoa, Wallets wallet) {
+
+        return CriptoTransacao.builder()
+                .moeda(transacaoInput.getMoeda())
+                .quantidade(transacaoInput.getQuantidade())
+                .precoNegociacao(transacaoInput.getPreco())
+                .valorInvestido(transacaoInput.getValorInvestido())
+                .tipoOrdemCripto(transacaoInput.getTipoOrdemCripto())
+                .pessoa(pessoa)
+                .wallet(wallet)
+                .build();
+    }
+
     private WalletResponse getWalletRepresentation(Wallets wallet) {
 
         return WalletResponse.builder()
@@ -44,6 +59,8 @@ public class CriptoTransacaoMapper {
                 .tipoCarteira(wallet.getTipoCarteira())
                 .saldo(wallet.getSaldo())
                 .status(wallet.getStatus())
+                .dataCriacao(wallet.getDataCriacao())
+                .dataUltimaAtualizacao(wallet.getDataUltimaAtualizacao())
                 .origem(getOrigemRepresentation(wallet.getOrigem()))
                 .build();
     }

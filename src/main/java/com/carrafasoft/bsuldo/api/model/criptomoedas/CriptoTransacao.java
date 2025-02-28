@@ -8,7 +8,6 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,7 +39,6 @@ public class CriptoTransacao {
     private MoedaEnum moeda;
 
     @NotNull
-    @Positive
     @Column(precision = 19, scale = 8, nullable = false)
     private BigDecimal quantidade;
 
@@ -50,7 +48,6 @@ public class CriptoTransacao {
     private BigDecimal precoNegociacao;
 
     @NotNull
-    @PositiveOrZero
     @Column(name = "valor_investido", precision = 19, scale = 8, nullable = false)
     private BigDecimal valorInvestido;
 

@@ -5,6 +5,7 @@ import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.mapper.WalletMapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletSaldoResponse;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
@@ -14,6 +15,7 @@ import com.carrafasoft.bsuldo.api.service.OrigemService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.WalletService;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.transform.Transformers;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,7 +23,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -41,6 +47,9 @@ public class WalletServiceImpl implements WalletService {
 
     @Autowired
     private ApplicationEventPublisher publisher;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Wallets findById(String codigoWallet, String tokenId) {
@@ -62,7 +71,7 @@ public class WalletServiceImpl implements WalletService {
 
            Wallets walletCadastrado = repository.save(walletToSave);
 
-           publisher.publishEvent(new RecursoCriadoEvent(this, response, walletToSave.getWalletId()));
+           publisher.publishEvent(new RecursoCriadoEvent(this, response, walletCadastrado.getWalletId()));
 
            log.info("...: Wallet Cadastrado com sucesso. :...");
 
@@ -115,5 +124,36 @@ public class WalletServiceImpl implements WalletService {
     public Wallets findByCodigoWallet(String codigoWallet) {
 
         return repository.findByCodigoWallet(codigoWallet).orElseThrow(() -> new WalletNaoEncontradoException(codigoWallet));
+    }
+
+    public List<WalletSaldoResponse> getSaldoWalletsList(Long pessoaId) {
+
+        String sql = "SELECT  " +
+                "w.codigo_wallet AS codigoWallet, " +
+                "COALESCE(SUM( " +
+                "CASE " +
+                "WHEN ct.tipo_ordem_cripto IN ('COMPRA', 'BONIFICACAO') THEN ct.quantidade " +
+                "WHEN ct.tipo_ordem_cripto IN ('VENDA', 'TRANSFERENCIA') THEN -ct.quantidade " +
+                "ELSE 0 " +
+                "END " +
+                "), 0) AS saldo " +
+                "FROM wallets w " +
+                "LEFT JOIN cripto_transacao ct ON w.wallet_id = ct.wallet_id " +
+                "WHERE w.pessoa_id = ? " +
+                "GROUP BY w.wallet_id ";
+
+
+        // Criar uma consulta nativa usando o EntityManager
+        Query query = entityManager.createNativeQuery(sql);
+
+        query.setParameter(1, pessoaId);
+
+        // Configurar um transformador para mapear os resultados para a classe RelatorioBasico
+        query.unwrap(org.hibernate.query.Query.class).setResultTransformer(Transformers.aliasToBean(WalletSaldoResponse.class));
+
+        // Executar a consulta
+        List<WalletSaldoResponse> resultados = query.getResultList();
+
+        return resultados;
     }
 }
