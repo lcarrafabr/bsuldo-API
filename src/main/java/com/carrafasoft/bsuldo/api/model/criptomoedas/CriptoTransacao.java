@@ -76,11 +76,40 @@ public class CriptoTransacao {
         setDataTransacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         setDataUltimaAtualizacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         setCodigoCrioptoTransacao(UUID.randomUUID().toString());
+
+        verificaSinalOperacao();
     }
 
     @PreUpdate
     public void aoAtualizar() {
 
         setDataUltimaAtualizacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
+        verificaSinalOperacao();
     }
+
+    private void verificaSinalOperacao() {
+
+        if (tipoOrdemCripto.equals(TipoOrdemCriptoEnum.VENDA) ||
+                tipoOrdemCripto.equals(TipoOrdemCriptoEnum.TRANSFERENCIA_SAIDA) ||
+                tipoOrdemCripto.equals(TipoOrdemCriptoEnum.QUEIMA)) {
+
+            // Garantir que VENDA, TRANSFERÊNCIA_SAÍDA e QUEIMA tenham valores negativos
+            if (valorInvestido.compareTo(BigDecimal.ZERO) > 0) {
+                valorInvestido = valorInvestido.negate();
+            }
+            if (quantidade.compareTo(BigDecimal.ZERO) > 0) {
+                quantidade = quantidade.negate();
+            }
+        } else {
+            // Garantir que COMPRA e outros tipos de entrada tenham valores positivos
+            if (valorInvestido.compareTo(BigDecimal.ZERO) < 0) {
+                valorInvestido = valorInvestido.negate();
+            }
+            if (quantidade.compareTo(BigDecimal.ZERO) < 0) {
+                quantidade = quantidade.negate();
+            }
+        }
+    }
+
+
 }

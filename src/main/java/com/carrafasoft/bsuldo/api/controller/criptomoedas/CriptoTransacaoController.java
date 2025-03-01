@@ -56,4 +56,22 @@ public class CriptoTransacaoController {
                 mapper.toCriptoTransacaoResponse(transacaoSalva)
         );
     }
+
+    @PutMapping("/{codigoCriptoTransacao}")
+    public ResponseEntity<CriptoTransacaoResponse> atualizarCriptoTransacao(@PathVariable String codigoCriptoTransacao,
+                                                                            @Valid @RequestBody CriptoTransacaoInput criptoTransacaoInput,
+                                                                            @RequestParam("tokenId") String tokenId) {
+
+        CriptoTransacao transacaoAtualizada = service.atualizaCriptoTransacao(codigoCriptoTransacao, criptoTransacaoInput, tokenId);
+
+        return ResponseEntity.ok(mapper.toCriptoTransacaoResponse(transacaoAtualizada));
+    }
+
+
+    @DeleteMapping("/{codigoCriptoTransacao}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void RemoverCriptoTransacao(@PathVariable String codigoCriptoTransacao) {
+
+        service.removerCriptoTransacao(codigoCriptoTransacao);
+    }
 }

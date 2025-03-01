@@ -2,6 +2,7 @@ package com.carrafasoft.bsuldo.api.mapper;
 
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemResponse;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemUpdateInput;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import org.springframework.stereotype.Component;

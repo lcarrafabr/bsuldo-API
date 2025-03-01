@@ -5,6 +5,7 @@ import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.mapper.OrigenMapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemUpdateInput;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.OrigemNaoEncontradaException;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -73,7 +75,7 @@ public class OrigemServiceImpl implements OrigemService {
 
     @Transactional
     @Override
-    public Origens atualizarOrigem(String codigoOrigem, OrigemInput origemInput, String tokenId) {
+    public Origens atualizarOrigem(String codigoOrigem, OrigemUpdateInput origemInput, String tokenId) {
 
         try {
             Origens origemSalva = buscaOrigemPorIdAndToken(codigoOrigem, tokenId);
@@ -115,5 +117,15 @@ public class OrigemServiceImpl implements OrigemService {
     public Origens findByCodigoOrigem(String codigoOrigem){
 
         return repository.findByCodigoOrigem(codigoOrigem).orElseThrow(() -> new OrigemNaoEncontradaException(codigoOrigem));
+    }
+
+    @Override
+    public List<Origens> buscaOrigemPorNome(String nomeOrigem, String tokenid) {
+
+        List<Origens> origemList = repository.findByNomeOrigemAndPessoaId(
+                nomeOrigem, pessoaService.recuperaIdPessoaByToken(tokenid)
+        );
+
+        return origemList;
     }
 }

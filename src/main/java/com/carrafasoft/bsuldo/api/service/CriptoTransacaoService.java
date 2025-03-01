@@ -14,4 +14,8 @@ public interface CriptoTransacaoService {
 
     CriptoTransacao cadastrarCriptoTransacao(CriptoTransacaoInput criptoTransacaoInput, String tokenId,
                                              HttpServletResponse response);
+
+    CriptoTransacao atualizaCriptoTransacao(String codigoCriptoTransacao, CriptoTransacaoInput criptoTransacaoInput, String tokenId);
+
+    void removerCriptoTransacao(String codigoCritoTransacao);
 }

@@ -15,8 +15,10 @@ import com.carrafasoft.bsuldo.api.service.CriptoTransacaoService;
 import com.carrafasoft.bsuldo.api.service.PessoaService;
 import com.carrafasoft.bsuldo.api.service.WalletService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,11 +94,40 @@ public class CriptoTransacaoServiceImpl implements CriptoTransacaoService {
 
             publisher.publishEvent(new RecursoCriadoEvent(this, response, transacaoSalva.getCriptoTransacaoId()));
 
-            log.info("...: Wallet Cadastrado com sucesso. :...");
+            log.info("...: Transação Cadastrado com sucesso. :...");
 
             return transacaoSalva;
         } catch (EntidadeNaoEncontradaException e) {
             throw new NegocioException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    @Override
+    public CriptoTransacao atualizaCriptoTransacao(String codigoCriptoTransacao, CriptoTransacaoInput criptoTransacaoInput,
+                                                   String tokenId) {
+
+        try {
+            CriptoTransacao transacaoSalva = findByCodigoAndTokenId(codigoCriptoTransacao, tokenId);
+            BeanUtils.copyProperties(criptoTransacaoInput, transacaoSalva, "criptoTransacaoId");
+
+            return repository.save(transacaoSalva);
+
+        } catch (CriptoTransacaoNaoEncontradoException e) {
+            throw new NegocioException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    @Override
+    public void removerCriptoTransacao(String codigoCritoTransacao) {
+
+        try {
+            repository.deleteByCodigoCritoTransacao(codigoCritoTransacao);
+        } catch (EntidadeNaoEncontradaException e) {
+            throw new CriptoTransacaoNaoEncontradoException(codigoCritoTransacao);
+        } catch (DataIntegrityViolationException e) {
+            throw new EntidadeNaoEncontradaException(e.getMessage());
         }
     }
 

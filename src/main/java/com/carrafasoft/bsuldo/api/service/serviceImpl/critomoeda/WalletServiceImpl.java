@@ -87,6 +87,10 @@ public class WalletServiceImpl implements WalletService {
 
         try {
             Wallets walletSalvo = findById(codigoWallet, tokenId);
+            Origens origemSalva = origemService.findByCodigoOrigem(walletInput.getOrigem().getCodigoOrigem());
+
+            walletSalvo.setOrigem(origemSalva);
+
             BeanUtils.copyProperties(walletInput, walletSalvo, "walletId");
             return repository.save(walletSalvo);
 

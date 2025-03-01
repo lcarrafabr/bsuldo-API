@@ -94,7 +94,7 @@ public class OrdensDeCompra {
         tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.VENDA)) {
 
             valorInvestido = valorInvestido.multiply(new BigDecimal("-1"));
-            quantidadeCotas = quantidadeCotas * -1;
+            quantidadeCotas = quantidadeCotas;
         }
 
         if(valorInvestido.compareTo(BigDecimal.ZERO) < 0 &&

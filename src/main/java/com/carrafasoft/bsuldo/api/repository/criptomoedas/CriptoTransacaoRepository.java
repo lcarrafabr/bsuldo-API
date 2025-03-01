@@ -23,4 +23,9 @@ public interface CriptoTransacaoRepository extends JpaRepository<CriptoTransacao
             "and codigo_cripto_transacao = :codigoCriptoTransacao ")
     Optional<CriptoTransacao> findByCodigoCriptoTransacaoAndTokenId(@Param("codigoCriptoTransacao") String codigoCriptoTransacao,
                                                                     @Param("pessoaId") Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "delete from cripto_transacao " +
+            "where codigo_cripto_transacao = :codigoCritoTransacao ")
+    void deleteByCodigoCritoTransacao(@Param("codigoCritoTransacao") String codigoCritoTransacao);
 }
