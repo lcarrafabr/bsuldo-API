@@ -37,4 +37,10 @@ public interface OrigemRepository extends JpaRepository<Origens, Long> {
             "and nome_origem like %:nomeOrigem%  ")
     List<Origens> findByNomeOrigemAndPessoaId(@Param("nomeOrigem") String nomeOrigem,
                                               @Param("pessoaId") Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "select * from origens " +
+            "where pessoa_id = :pessoaId " +
+            "and status_ativo = 1")
+    List<Origens> findByOrigemAtivo(@Param("pessoaId") Long pessoaId);
 }

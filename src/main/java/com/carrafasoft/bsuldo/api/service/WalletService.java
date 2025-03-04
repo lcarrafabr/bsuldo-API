@@ -1,6 +1,8 @@
 package com.carrafasoft.bsuldo.api.service;
 
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletPesquisaResponse;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletSaldoResponse;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
 
@@ -13,12 +15,14 @@ public interface WalletService {
 
     Wallets cadastrarVallet(WalletInput walletInput, String tokenId, HttpServletResponse response);
 
-    Wallets atualizarWallet(String codigoWallet, WalletInput walletInput, String tokenId);
+    Wallets atualizarWallet(String codigoWallet, WalletResponse walletInput, String tokenId);
 
     void removerWalet(String codigoWallet);
 
     void atualizaStatusAtivo(String codigoWallet, Boolean ativo);
 
     List<WalletSaldoResponse> getSaldoWalletsList(Long pessoaId);
+
+    List<WalletResponse> getListaWalletComSaldo(Long pessoaId);
 
 }

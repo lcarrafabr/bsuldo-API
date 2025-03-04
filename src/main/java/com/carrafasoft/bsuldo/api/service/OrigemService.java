@@ -23,4 +23,6 @@ public interface OrigemService {
     Origens findByCodigoOrigem(String codigoOrigem);
 
     List<Origens> buscaOrigemPorNome(String nomeOrigem, String tokenid);
+
+    List<Origens> findByOrigemAtivo(String tokenId);
 }

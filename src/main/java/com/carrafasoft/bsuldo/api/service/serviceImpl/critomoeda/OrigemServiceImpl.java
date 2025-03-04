@@ -128,4 +128,10 @@ public class OrigemServiceImpl implements OrigemService {
 
         return origemList;
     }
+
+    @Override
+    public List<Origens> findByOrigemAtivo(String tokenId) {
+
+        return repository.findByOrigemAtivo(pessoaService.recuperaIdPessoaByToken(tokenId));
+    }
 }

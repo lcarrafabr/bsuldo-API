@@ -4,6 +4,7 @@ import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.mapper.WalletMapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletPesquisaResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.WalletNaoEncontradoException;
@@ -43,9 +44,11 @@ public class WalletController {
 
         Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 
-        return ResponseEntity.ok(mapper.toListWalletResponse(
-                repository.findAllByPessoaId(pessoaId))
-        );
+//        return ResponseEntity.ok(mapper.toListWalletResponse(
+//                repository.findAllByPessoaId(pessoaId))
+//        );
+
+        return ResponseEntity.ok(service.getListaWalletComSaldo(pessoaId));
     }
 
     @GetMapping("/{codigoWallet}")
@@ -68,7 +71,7 @@ public class WalletController {
 
     @PutMapping("/{codigoWallet}")
     public ResponseEntity<WalletResponse> atualizarWallet(@PathVariable String codigoWallet,
-                                                          @Valid @RequestBody WalletInput walletInput,
+                                                          @Valid @RequestBody WalletResponse walletInput,
                                                           @RequestParam("tokenId") String tokenId) {
 
         return ResponseEntity.ok(

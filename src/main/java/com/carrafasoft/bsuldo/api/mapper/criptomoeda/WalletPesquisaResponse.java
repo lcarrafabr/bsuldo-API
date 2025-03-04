@@ -1,6 +1,5 @@
 package com.carrafasoft.bsuldo.api.mapper.criptomoeda;
 
-import com.carrafasoft.bsuldo.api.enums.MoedaEnum;
 import com.carrafasoft.bsuldo.api.enums.TipoCarteiraEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,11 +13,11 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WalletResponse {
+public class WalletPesquisaResponse {
 
     private String codigoWallet;
     private String nomeCarteira;
-    private TipoCarteiraEnum tipoCarteira;
+    private String tipoCarteira;
     private BigDecimal saldo;
     private Boolean status;
     private LocalDateTime dataCriacao;

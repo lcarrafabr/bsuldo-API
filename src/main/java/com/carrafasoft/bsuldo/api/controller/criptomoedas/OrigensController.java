@@ -97,4 +97,12 @@ public class OrigensController {
                 service.buscaOrigemPorNome(nomeOrigem,tokenId)
         ));
     }
+
+    @GetMapping("/busca-origem-ativo")
+    public ResponseEntity<List<OrigemResponse>> findByOPrigemAtivo(@RequestParam("tokenId") String tokenId) {
+
+        return ResponseEntity.ok(
+                mapper.toListOrigemResponse(service.findByOrigemAtivo(tokenId))
+        );
+    }
 }

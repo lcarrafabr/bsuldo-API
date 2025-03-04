@@ -1,10 +1,13 @@
 package com.carrafasoft.bsuldo.api.service.serviceImpl.critomoeda;
 
+import com.carrafasoft.bsuldo.api.enums.TipoCarteiraEnum;
 import com.carrafasoft.bsuldo.api.event.RecursoCriadoEvent;
 import com.carrafasoft.bsuldo.api.exception.EntidadeNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.mapper.WalletMapper;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletSaldoResponse;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
@@ -27,6 +30,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -83,7 +89,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public Wallets atualizarWallet(String codigoWallet, WalletInput walletInput, String tokenId) {
+    public Wallets atualizarWallet(String codigoWallet, WalletResponse walletInput, String tokenId) {
 
         try {
             Wallets walletSalvo = findById(codigoWallet, tokenId);
@@ -105,10 +111,8 @@ public class WalletServiceImpl implements WalletService {
 
         try {
             repository.deleteByCodigoWallet(codigoWallet);
-        } catch (EntidadeNaoEncontradaException e) {
-            throw new WalletNaoEncontradoException(codigoWallet);
         } catch (DataIntegrityViolationException e) {
-            throw new EntidadeNaoEncontradaException(e.getMessage());
+            throw new DataIntegrityViolationException(e.getMessage());
         }
     }
 
@@ -129,6 +133,9 @@ public class WalletServiceImpl implements WalletService {
 
         return repository.findByCodigoWallet(codigoWallet).orElseThrow(() -> new WalletNaoEncontradoException(codigoWallet));
     }
+
+
+
 
     public List<WalletSaldoResponse> getSaldoWalletsList(Long pessoaId) {
 
@@ -160,4 +167,60 @@ public class WalletServiceImpl implements WalletService {
 
         return resultados;
     }
+
+
+    public List<WalletResponse> getListaWalletComSaldo(Long pessoaId) {
+
+        String sql = "SELECT " +
+                "w.codigo_wallet as codigoWallet, " +
+                "w.nome_carteira as nomeCarteira, " +
+                "w.tipo_carteira as tipoCarteira, " +
+                "w.status, " +
+                "COALESCE(SUM(valor_investido), 0) AS saldo, " +
+                "w.data_criacao as dataCriacao, " +
+                "w.data_ultima_atualizacao as dataUltimaAtualizacao, " +
+                "o.codigo_origem as codigoOrigem, " +  // Pegando detalhes da origem
+                "o.nome_origem as nomeOrigem, " +     // Nome da origem
+                "o.status_ativo as statusAtivo " +         // Status da origem
+                "FROM wallets w " +
+                "LEFT JOIN cripto_transacao ct ON w.wallet_id = ct.wallet_id " +
+                "LEFT JOIN origens o ON w.origem_id = o.origem_id " +  // Fazendo JOIN com a tabela de origem
+                "WHERE w.pessoa_id = ? " +
+                "GROUP BY w.wallet_id, o.codigo_origem, o.nome_origem, o.status_ativo ";  // Ajustando GROUP BY
+
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, pessoaId);
+
+        // Pegando os resultados como lista de Object[]
+        List<Object[]> resultList = query.getResultList();
+        List<WalletResponse> wallets = new ArrayList<>();
+
+        for (Object[] obj : resultList) {
+
+            OrigemResponse origem = null;
+            if (obj[7] != null) {
+                origem = OrigemResponse.builder()
+                        .codigoOrigem((String) obj[7])
+                        .nomeOrigem((String) obj[8])
+                        .status((Boolean) obj[9])
+                        .build();
+            }
+
+            WalletResponse wallet = WalletResponse.builder()
+                    .codigoWallet((String) obj[0])
+                    .nomeCarteira((String) obj[1])
+                    .tipoCarteira(obj[2] != null ? TipoCarteiraEnum.valueOf((String) obj[2]) : null) // Conversão manual
+                    .status((Boolean) obj[3])
+                    .saldo((BigDecimal) obj[4])
+                    .dataCriacao(obj[5] != null ? ((Timestamp) obj[5]).toLocalDateTime() : null)
+                    .dataUltimaAtualizacao(obj[6] != null ? ((Timestamp) obj[6]).toLocalDateTime() : null)
+                    .origem(origem) // Ajuste conforme necessário
+                    .build();
+
+            wallets.add(wallet);
+        }
+
+        return wallets;
+    }
+
 }
