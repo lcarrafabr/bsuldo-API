@@ -5,6 +5,7 @@ import com.carrafasoft.bsuldo.api.binanceapi.v1.service.BinanceApiService;
 import com.carrafasoft.bsuldo.api.exception.NegocioException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+@Slf4j
 @Service
 public class BinanceApiServiceImpl implements BinanceApiService {
 
@@ -25,13 +27,14 @@ public class BinanceApiServiceImpl implements BinanceApiService {
 
         try {
 
-            PrecoCriptoBinance cotacaoCriptoDollar = getCriptoPrice(ticker);
+            PrecoCriptoBinance cotacaoCriptoDollar = getCriptoPrice(ticker.toUpperCase());
+            log.info(cotacaoCriptoDollar.getSymbol());
             PrecoCriptoBinance cotacaoDollarBRL = consultaCotacaoDollar();
 
             BigDecimal valorCriptoBRL = cotacaoCriptoDollar.getPrice().multiply(cotacaoDollarBRL.getPrice());
 
             return  PrecoCriptoBinance.builder()
-                    .symbol(cotacaoDollarBRL.getSymbol())
+                    .symbol(cotacaoCriptoDollar.getSymbol())
                     .price(valorCriptoBRL)
                     .build();
 

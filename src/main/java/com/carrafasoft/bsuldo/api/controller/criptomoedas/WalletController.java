@@ -6,6 +6,7 @@ import com.carrafasoft.bsuldo.api.mapper.WalletMapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletPesquisaResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletsAtivosListResponse;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
 import com.carrafasoft.bsuldo.api.model.exceptionmodel.WalletNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.repository.criptomoedas.WalletRepository;
@@ -90,5 +91,13 @@ public class WalletController {
     public void atualizaStatusAtivo(@PathVariable String codigoWallet,@RequestBody Boolean ativo) {
 
         service.atualizaStatusAtivo(codigoWallet, ativo);
+    }
+
+    @GetMapping("/lista-wallets-ativos")
+    public ResponseEntity<List<WalletsAtivosListResponse>> listaWalletsAtivos(@RequestParam("tokenId") String tokenId) {
+
+        return ResponseEntity.ok(mapper.toWalletAtivoListResponse(
+                service.listaWalletsAtivos(tokenId)
+        ));
     }
 }

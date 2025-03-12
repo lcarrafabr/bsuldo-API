@@ -3,6 +3,7 @@ package com.carrafasoft.bsuldo.api.mapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.OrigemResponse;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletResponse;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.WalletsAtivosListResponse;
 import com.carrafasoft.bsuldo.api.model.Pessoas;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Origens;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.Wallets;
@@ -46,12 +47,29 @@ public class WalletMapper {
                 .build();
     }
 
+
+
+    public List<WalletsAtivosListResponse> toWalletAtivoListResponse(List<Wallets> walletsList) {
+
+        return walletsList.stream()
+                .map(this::toWalletAtivoResponse)
+                .collect(Collectors.toList());
+    }
+
     private OrigemResponse getOrigemResponse(Wallets wallet) {
 
         return OrigemResponse.builder()
                 .codigoOrigem(wallet.getOrigem().getCodigoOrigem())
                 .nomeOrigem(wallet.getOrigem().getNomeOrigem())
                 .status(wallet.getOrigem().getStatusAtivo())
+                .build();
+    }
+
+    private WalletsAtivosListResponse toWalletAtivoResponse(Wallets wallet) {
+
+        return WalletsAtivosListResponse.builder()
+                .codigoWallet(wallet.getCodigoWallet())
+                .nomeWallet(wallet.getNomeCarteira())
                 .build();
     }
 }

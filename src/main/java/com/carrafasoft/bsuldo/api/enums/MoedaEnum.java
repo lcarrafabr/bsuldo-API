@@ -7,5 +7,13 @@ public enum MoedaEnum {
     LTC,  // Litecoin
     XRP,  // Ripple
     BCH,  // Bitcoin Cash
-    DOGE; // Dogecoin
+    DOGE, // Dogecoin
+    AAVE, //AAVE
+    DOT,  //Polkadot
+    SOL,  //SOLANA
+    ADA,  //Cardano
+    AVAX, //Avalanche
+    POL,  //Polygon
+    LINK; //Chainlink
+
 }

@@ -353,44 +353,67 @@ public class OrdemDeCompraRVService {
 
         Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
 
+
         String sql = "SELECT " +
-                "tipo_produto_enum as tipoAtivoEnum, " +
+                "tipo_produto_enum AS tipoAtivoEnum, " +
                 "SUM(total) AS total, " +
-                "ROUND((SUM(total) / (SELECT SUM(total) FROM ( " +
-                "SELECT SUM(valor_investido) AS total " +
+                "ROUND((SUM(total) / ( " +
+                "SELECT SUM(total) " +
+                "FROM ( " +
+                "SELECT SUM(valor_investido) AS total  " +
                 "FROM ordens_de_compra " +
-                "WHERE pessoa_id = " + pessoaId + " " +
+                "WHERE pessoa_id = :pessoaId " +
                 "GROUP BY tipo_produto_enum " +
-                "" +
+
                 "UNION ALL " +
-                "" +
+
                 "SELECT SUM(valor_transacao) AS total " +
                 "FROM ordem_renda_fixa " +
-                "WHERE pessoa_id = " + pessoaId + " " +
+                "WHERE pessoa_id = :pessoaId " +
                 "GROUP BY tipo_ordem_renda_fixa_enum " +
-                ") AS subquery)) * 100, 2) AS percentual " +
+
+                "UNION ALL  " +
+
+                "SELECT SUM(valor_investido) AS total  " +
+                "FROM cripto_transacao  " +
+                "WHERE pessoa_id = :pessoaId " +
+                "GROUP BY 'CRIPTO' "  +// Aqui é o valor fixo para todas as transações de cripto ;
+                ") AS subquery " +
+                ")) * 100, 2) AS percentual " +
                 "FROM ( " +
                 "SELECT " +
                 "tipo_produto_enum, " +
                 "SUM(valor_investido) AS total " +
                 "FROM ordens_de_compra o " +
-                "WHERE pessoa_id = " + pessoaId + " " +
+                "WHERE pessoa_id = :pessoaId " +
                 "GROUP BY tipo_produto_enum " +
-                "" +
+
                 "UNION ALL " +
-                "" +
+
                 "SELECT " +
                 "'RENDA_FIXA' AS tipo_produto_enum, " +
                 "SUM(valor_transacao) AS total " +
                 "FROM ordem_renda_fixa " +
-                "WHERE pessoa_id = " + pessoaId + " " +
+                "WHERE pessoa_id = :pessoaId " +
                 "GROUP BY tipo_produto_enum " +
+
+                "UNION ALL " +
+
+                "SELECT " +
+                "'CRYPTO' AS tipo_produto_enum, " + //Substituindo tipo_ordem_cripto por 'CRYPTO'
+                "SUM(valor_investido) AS total " +
+                "FROM cripto_transacao " +
+                "WHERE pessoa_id = :pessoaId " +
+                "GROUP BY 'CRYPTO' " + //Agrupando todas as transações de cripto como 'CRIPTO'
                 ") AS subquery " +
-                "GROUP BY tipo_produto_enum";
+                "GROUP BY tipo_produto_enum " +
+                "order by percentual desc ";
 
 
         // Criar uma consulta nativa usando o EntityManager
         Query query = entityManager.createNativeQuery(sql);
+
+        query.setParameter("pessoaId", pessoaId);
 
         // Configurar um transformador para mapear os resultados para a classe RelatorioBasico
         query.unwrap(org.hibernate.query.Query.class).setResultTransformer(Transformers.aliasToBean(RelatorioPercentualAcoesFiis.class));
@@ -408,10 +431,10 @@ public class OrdemDeCompraRVService {
         BigDecimal numerador = cotacaoAtual.subtract(precoMedio);
         BigDecimal denominador = precoMedio;
 
-        BigDecimal variacaoPercentual = numerador.divide(denominador, 4, BigDecimal.ROUND_HALF_EVEN)
+        BigDecimal variacaoPercentual = numerador.divide(denominador, 4, RoundingMode.HALF_EVEN)
                 .multiply(new BigDecimal(100));
 
-        return variacaoPercentual.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        return variacaoPercentual.setScale(2, RoundingMode.HALF_EVEN);
     }
 
     private BigDecimal calculaSaldoVariacao(BigDecimal qtdCotas, BigDecimal valorAtualCota) {

@@ -1,5 +1,6 @@
 package com.carrafasoft.bsuldo.api.controller.criptomoedas;
 
+import com.carrafasoft.bsuldo.api.enums.MoedaEnum;
 import com.carrafasoft.bsuldo.api.mapper.CriptoTransacaoMapper;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoInput;
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoResponse;
@@ -14,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/v1/cripto-transacao", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -73,5 +76,13 @@ public class CriptoTransacaoController {
     public void RemoverCriptoTransacao(@PathVariable String codigoCriptoTransacao) {
 
         service.removerCriptoTransacao(codigoCriptoTransacao);
+    }
+
+    @GetMapping("/lista-criptomoedas-list")
+    public List<String> getMoedasCriptoList() {
+
+        return Arrays.stream(MoedaEnum.values())
+                .map(Enum::name)
+                .collect(Collectors.toList());
     }
 }

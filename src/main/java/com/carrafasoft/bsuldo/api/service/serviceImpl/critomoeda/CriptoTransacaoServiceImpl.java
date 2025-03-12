@@ -84,7 +84,7 @@ public class CriptoTransacaoServiceImpl implements CriptoTransacaoService {
     public CriptoTransacao cadastrarCriptoTransacao(CriptoTransacaoInput criptoTransacaoInput, String tokenId, HttpServletResponse response) {
 
         try {
-            log.info("...: Preparando cadastro de WALLET do usuario: {}", tokenId);
+            log.info("...: Preparando cadastro de transação de criptomoeda do usuario: {}", tokenId);
             Wallets walletSalvo = walletService.findById(criptoTransacaoInput.getWallet().getCodigoWallet(), tokenId);
             Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
 

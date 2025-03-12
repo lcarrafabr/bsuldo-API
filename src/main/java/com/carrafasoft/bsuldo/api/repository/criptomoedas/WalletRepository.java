@@ -31,4 +31,10 @@ public interface WalletRepository extends JpaRepository<Wallets, Long> {
     void deleteByCodigoWallet(@Param("codigoWallet") String codigoWallet);
 
     Optional<Wallets> findByCodigoWallet(@Param("codigoWallet") String codigoWallet);
+
+    @Query(nativeQuery = true,
+    value = "select * from wallets " +
+            "where pessoa_id = :pessoaId " +
+            "and status = 1 ")
+    List<Wallets> findByTokenId(@Param("pessoaId") Long pessoaId);
 }

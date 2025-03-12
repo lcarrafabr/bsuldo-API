@@ -223,4 +223,10 @@ public class WalletServiceImpl implements WalletService {
         return wallets;
     }
 
+    @Override
+    public List<Wallets> listaWalletsAtivos(String tokenId) {
+
+        return repository.findByTokenId(pessoaService.recuperaIdPessoaByToken(tokenId));
+    }
+
 }

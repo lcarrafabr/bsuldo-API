@@ -25,4 +25,6 @@ public interface WalletService {
 
     List<WalletResponse> getListaWalletComSaldo(Long pessoaId);
 
+    List<Wallets> listaWalletsAtivos(String tokenId);
+
 }
