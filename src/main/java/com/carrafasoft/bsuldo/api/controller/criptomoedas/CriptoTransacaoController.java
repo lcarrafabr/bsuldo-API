@@ -50,7 +50,7 @@ public class CriptoTransacaoController {
 
     @PostMapping
     public ResponseEntity<CriptoTransacaoResponse> cadastrarCriptoTrasacao(@Valid @RequestBody CriptoTransacaoInput criptoTransacaoInput,
-                                                                           @RequestParam("tokenid") String tokenId,
+                                                                           @RequestParam("tokenId") String tokenId,
                                                                            HttpServletResponse response) {
 
         CriptoTransacao transacaoSalva = service.cadastrarCriptoTransacao(criptoTransacaoInput, tokenId, response);
@@ -62,7 +62,7 @@ public class CriptoTransacaoController {
 
     @PutMapping("/{codigoCriptoTransacao}")
     public ResponseEntity<CriptoTransacaoResponse> atualizarCriptoTransacao(@PathVariable String codigoCriptoTransacao,
-                                                                            @Valid @RequestBody CriptoTransacaoInput criptoTransacaoInput,
+                                                                            @Valid @RequestBody CriptoTransacaoResponse criptoTransacaoInput,
                                                                             @RequestParam("tokenId") String tokenId) {
 
         CriptoTransacao transacaoAtualizada = service.atualizaCriptoTransacao(codigoCriptoTransacao, criptoTransacaoInput, tokenId);

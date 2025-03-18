@@ -14,7 +14,8 @@ public interface CriptoTransacaoRepository extends JpaRepository<CriptoTransacao
 
     @Query(nativeQuery = true,
     value = "select * from cripto_transacao " +
-            "where pessoa_id = :pessoaId ")
+            "where pessoa_id = :pessoaId " +
+            "order by cripto_trasacao_id desc ")
     List<CriptoTransacao> findAllByPessoaId(@Param("pessoaId") Long pessoaId);
 
     @Query(nativeQuery = true,

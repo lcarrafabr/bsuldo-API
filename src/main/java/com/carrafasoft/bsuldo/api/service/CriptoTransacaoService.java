@@ -1,6 +1,7 @@
 package com.carrafasoft.bsuldo.api.service;
 
 import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoInput;
+import com.carrafasoft.bsuldo.api.mapper.criptomoeda.CriptoTransacaoResponse;
 import com.carrafasoft.bsuldo.api.model.criptomoedas.CriptoTransacao;
 
 import javax.servlet.http.HttpServletResponse;
@@ -15,7 +16,7 @@ public interface CriptoTransacaoService {
     CriptoTransacao cadastrarCriptoTransacao(CriptoTransacaoInput criptoTransacaoInput, String tokenId,
                                              HttpServletResponse response);
 
-    CriptoTransacao atualizaCriptoTransacao(String codigoCriptoTransacao, CriptoTransacaoInput criptoTransacaoInput, String tokenId);
+    CriptoTransacao atualizaCriptoTransacao(String codigoCriptoTransacao, CriptoTransacaoResponse criptoTransacaoInput, String tokenId);
 
     void removerCriptoTransacao(String codigoCritoTransacao);
 }

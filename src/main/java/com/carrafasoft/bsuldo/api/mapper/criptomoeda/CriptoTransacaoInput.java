@@ -22,7 +22,7 @@ public class CriptoTransacaoInput {
 
     @NotNull
     @PositiveOrZero
-    private BigDecimal preco;
+    private BigDecimal precoNegociacao;
 
     @NotNull
     private BigDecimal valorInvestido;

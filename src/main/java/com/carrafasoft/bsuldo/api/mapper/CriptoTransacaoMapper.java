@@ -43,7 +43,7 @@ public class CriptoTransacaoMapper {
         return CriptoTransacao.builder()
                 .moeda(transacaoInput.getMoeda())
                 .quantidade(transacaoInput.getQuantidade())
-                .precoNegociacao(transacaoInput.getPreco())
+                .precoNegociacao(transacaoInput.getPrecoNegociacao())
                 .valorInvestido(transacaoInput.getValorInvestido())
                 .tipoOrdemCripto(transacaoInput.getTipoOrdemCripto())
                 .pessoa(pessoa)
