@@ -1,6 +1,6 @@
 package com.carrafasoft.bsuldo.braviapi.service;
 
-import com.carrafasoft.bsuldo.api.model.Indexes;
+import com.carrafasoft.bsuldo.api.v1.model.Indexes;
 import com.carrafasoft.bsuldo.braviapi.modelo.PrecoAtualCota;
 import com.carrafasoft.bsuldo.braviapi.modelo.Results;
 import com.google.gson.Gson;
