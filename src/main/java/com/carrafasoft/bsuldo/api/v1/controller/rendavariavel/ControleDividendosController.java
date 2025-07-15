@@ -1,51 +1,65 @@
 package com.carrafasoft.bsuldo.api.v1.controller.rendavariavel;
 
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ControleDividendoInput;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ControleDividendosInputUpdate;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ControleDividendosResponseRepresentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.rendavariavel.ControleDividendosMapper;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ControleDividendos;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.ControleDividendosCadastroCombobox;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.GraficoDividendosRecebidosPorMesEAno;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.TotalDivDisponivelDTO;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.TotalDivRecebidoDTO;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.ControleDividendosRepository;
+import com.carrafasoft.bsuldo.api.v1.service.ControleDividendoService;
 import com.carrafasoft.bsuldo.api.v1.service.PessoaService;
-import com.carrafasoft.bsuldo.api.v1.service.rendavariavel.ControleDividendosService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.carrafasoft.bsuldo.api.v1.service.rendavariavel.ControleDividendosServiceImpl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/controle-dividendos")
-public class ControleDividendosResource {
+@RequestMapping(path = "/controle-dividendos", produces = MediaType.APPLICATION_JSON_VALUE)
+public class ControleDividendosController {
 
-    @Autowired
-    private ControleDividendosRepository repository;
 
-    @Autowired
-    private ControleDividendosService service;
+    private final ControleDividendosRepository repository;
+    private final ControleDividendosServiceImpl serviceImpl;
+    private final PessoaService pessoaService;
 
-    @Autowired
-    private PessoaService pessoaService;
+    private final ControleDividendoService service;
 
+    private final ControleDividendosMapper controleDividendosMapper;
+
+    public ControleDividendosController(ControleDividendosRepository repository, ControleDividendosServiceImpl serviceImpl,
+                                        PessoaService pessoaService, ControleDividendoService service,
+                                        ControleDividendosMapper controleDividendosMapper) {
+        this.repository = repository;
+        this.serviceImpl = serviceImpl;
+        this.pessoaService = pessoaService;
+        this.service = service;
+        this.controleDividendosMapper = controleDividendosMapper;
+    }
 
     @GetMapping
-    public List<ControleDividendos> findAll(@RequestParam("tokenId") String tokenId,
+    public ResponseEntity<List<ControleDividendosResponseRepresentation>> findAll(@RequestParam("tokenId") String tokenId,
                                             @RequestParam(value = "ticker", required = false) String ticker,
                                             @RequestParam(value = "tipoRecebimento", required = false) String tipoRecebimento,
                                             @RequestParam(value = "dataReferencia", required = false) String dataReferencia,
                                             @RequestParam(value = "dataPagamento", required = false) String dataPagamento) {
 
-        return service.listarTodosOsDividendos(tokenId, ticker, tipoRecebimento, dataReferencia, dataPagamento);
+        List<ControleDividendos> findAll = service.listarTodosOsDividendos(tokenId, ticker, tipoRecebimento, dataReferencia, dataPagamento);
+
+        return ResponseEntity.ok(controleDividendosMapper.toListControleDividendoRepresentation(findAll));
     }
 
     @PostMapping
-    public ResponseEntity<ControleDividendos> cadastrarControlDiv(@Valid @RequestBody ControleDividendos controleDividendo, HttpServletResponse response,
+    public ResponseEntity<ControleDividendos> cadastrarControlDiv(@Valid @RequestBody ControleDividendoInput controleDividendo, HttpServletResponse response,
                                                                   @RequestParam("tokenId") String tokenId) {
 
         ControleDividendos controleDividendoSolvo = service.cadastrarControleDividendo(controleDividendo,response, tokenId);
@@ -54,35 +68,37 @@ public class ControleDividendosResource {
     }
 
     @GetMapping("/{codigo}")
-    public ResponseEntity<ControleDividendos> buscaPorId(@PathVariable Long codigo) {
+    public ResponseEntity<ControleDividendosResponseRepresentation> buscaPorId(@PathVariable String codigo,
+                                                         @RequestParam("tokenId") String tokenId) {
 
-        Optional<ControleDividendos> controleDivSalvo = repository.findById(codigo);
+        ControleDividendos controleDividendos = service.findByCodigoControleDivAndTokenId(codigo, tokenId);
 
-        return controleDivSalvo.isPresent() ? ResponseEntity.ok(controleDivSalvo.get()) : ResponseEntity.noContent().build();
+        return ResponseEntity.ok(controleDividendosMapper.toControleDividendoRepresentation(controleDividendos));
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<ControleDividendos> atualizarControlDiv(@PathVariable Long codigo,
-                                                                  @Valid @RequestBody ControleDividendos controleDividendos,
+    public ResponseEntity<ControleDividendosResponseRepresentation> atualizarControlDiv(@PathVariable String codigo,
+                                                                  @Valid @RequestBody ControleDividendosInputUpdate controleDividendos,
                                                                   @RequestParam("tokenId") String tokenId) {
 
         ControleDividendos controlDivAtualizado = service.atualizarControleDividendos(codigo, controleDividendos, tokenId);
 
-        return ResponseEntity.ok(controlDivAtualizado);
+        return ResponseEntity.ok(controleDividendosMapper.toControleDividendoRepresentation(controlDivAtualizado));
     }
 
     @DeleteMapping("/{codigo}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removerControleDividendo(@PathVariable Long codigo) {
+    public void removerControleDividendo(@PathVariable String codigo) {
 
-        repository.deleteById(codigo);
+        service.removerControleDividendo(codigo);
     }
 
     //******************************************************************************************************************
 
     @PutMapping("/{codigo}/divUsado")
     @ResponseStatus(HttpStatus.OK)
-    public void atualizaAtatusDivAtivo(@PathVariable Long codigo, @RequestBody Boolean divUsado) {
+    public void atualizaAtatusDivAtivo(@PathVariable String codigo, @RequestBody Boolean divUsado) {
+
         service.atualizaAtatusDividendoAtivo(codigo, divUsado);
     }
 
@@ -124,13 +140,13 @@ public class ControleDividendosResource {
                                                                                 @RequestParam("ano") String ano,
                                                                                 @RequestParam("mes") String mes) {
 
-        return service.getDadosGraficoDividendosPorMesEAno(ano,
+        return serviceImpl.getDadosGraficoDividendosPorMesEAno(ano,
                 mes, pessoaService.recuperaIdPessoaByToken(idToken));
     }
 
     @GetMapping("/verifica-div-a-receber-manual")
     public void verificaDividendoAReceberManual() {
 
-        service.verificaDividendoAReceber();
+        serviceImpl.verificaDividendoAReceber();
     }
 }

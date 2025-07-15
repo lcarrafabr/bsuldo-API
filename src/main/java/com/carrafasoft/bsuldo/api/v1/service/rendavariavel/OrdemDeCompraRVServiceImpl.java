@@ -4,13 +4,21 @@ import com.carrafasoft.bsuldo.api.v1.enums.TipoAtivoEnum;
 import com.carrafasoft.bsuldo.api.v1.enums.TipoOrdemManualAutoEnum;
 import com.carrafasoft.bsuldo.api.v1.enums.TipoOrdemRendaVariavelEnum;
 import com.carrafasoft.bsuldo.api.v1.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.v1.exception.EntidadeNaoEncontradaException;
+import com.carrafasoft.bsuldo.api.v1.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.OrdemDeCompraInputReppresentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.OrdemDeCompraInputUpdateRepresentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.rendavariavel.OrdemDeCompraMapper;
 import com.carrafasoft.bsuldo.api.v1.model.Pessoas;
+import com.carrafasoft.bsuldo.api.v1.model.exceptionmodel.OrdemDeCompraNaoEncontradaException;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.OrdensDeCompra;
-import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.*;
+import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ProdutosRendaVariavel;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.*;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.OrdemDeCompraRepository;
 import com.carrafasoft.bsuldo.api.v1.service.FeriadosService;
+import com.carrafasoft.bsuldo.api.v1.service.OrdemDeCompraRVService;
 import com.carrafasoft.bsuldo.api.v1.service.PessoaService;
+import com.carrafasoft.bsuldo.api.v1.service.ProdutoRendaVariavelService;
 import com.carrafasoft.bsuldo.api.v1.service.gerenciamentoapi.GerenciamentoProdutosListService;
 import com.carrafasoft.bsuldo.api.v1.utils.FuncoesUtils;
 import com.carrafasoft.bsuldo.braviapi.modelo.PrecoAtualCota;
@@ -23,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -37,7 +46,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-public class OrdemDeCompraRVService {
+public class OrdemDeCompraRVServiceImpl implements OrdemDeCompraRVService {
 
     @Value("${bsuldo.horariob3.inicio}")
     private String horarioInicioStr;
@@ -63,7 +72,28 @@ public class OrdemDeCompraRVService {
     @Autowired
     private PessoaService pessoaService;
 
+    @Autowired
+    private ProdutoRendaVariavelService produtoRendaVariavelService;
 
+    @Autowired
+    private OrdemDeCompraMapper ordemDeCompraMapper;
+
+
+    @Override
+    public List<OrdensDeCompra> findAll(String tokenId) {
+
+        return repository.findAllDesc(pessoaService.recuperaIdPessoaByToken(tokenId));
+    }
+
+    @Override
+    public OrdensDeCompra buscaPorCodidoOrdemDeCompraAndTokenId(String codigoOrdemDeCompra, String tokenId) {
+
+        return repository.findByCodigoOrdemCompraAndPessoaId(codigoOrdemDeCompra,
+                pessoaService.recuperaIdPessoaByToken(tokenId)).orElseThrow(() -> new OrdemDeCompraNaoEncontradaException(codigoOrdemDeCompra));
+    }
+
+
+    @Override
     public PrecoAtualCota consultaPrecoAtualCota(String ticker, String apiToken) {
         PrecoAtualCota precoAtualCota = new PrecoAtualCota();
         try{
@@ -85,31 +115,62 @@ public class OrdemDeCompraRVService {
         }
     }
 
-    public OrdensDeCompra cadastrarOrdemDeCompraVenda(OrdensDeCompra ordemCompra, HttpServletResponse response, String tokenId) {
+    @Transactional
+    @Override
+    public OrdensDeCompra cadastrarOrdemDeCompraVenda(OrdemDeCompraInputReppresentation ordemCompra, HttpServletResponse response, String tokenId) {
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        ordemCompra.setPessoa(pessoaSalva);
-        ordemCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
+        try {
+            Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+            ordemCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
 
-        BigDecimal resultadoValorInvestido = calculaValorInvestido(ordemCompra);
-        ordemCompra.setValorInvestido(resultadoValorInvestido);
+            BigDecimal resultadoValorInvestido = calculaValorInvestido(ordemCompra);
+            ordemCompra.setValorInvestido(resultadoValorInvestido);
 
-        OrdensDeCompra ordemDeCompraSalva = repository.save(ordemCompra);
-        publisher.publishEvent(new RecursoCriadoEvent(this, response, ordemCompra.getOrdemDeCompraId()));
+            ProdutosRendaVariavel produtosRendaVariavelSalvo = produtoRendaVariavelService.findByCodigoProdutoRVAndTokenId(
+                    ordemCompra.getProdutoRendaVariavel().getCodigoProdutoRV(), tokenId
+            );
 
-        return ordemDeCompraSalva;
+            OrdensDeCompra ordemCompraToSave = ordemDeCompraMapper.toEntity(ordemCompra, pessoaSalva, produtosRendaVariavelSalvo);
+
+            OrdensDeCompra ordemDeCompraSalva = repository.save(ordemCompraToSave);
+            publisher.publishEvent(new RecursoCriadoEvent(this, response, ordemDeCompraSalva.getOrdemDeCompraId()));
+
+            return ordemDeCompraSalva;
+
+        } catch (EntidadeNaoEncontradaException e) {
+            throw new NegocioException(e.getMessage());
+        }
     }
 
-    public OrdensDeCompra atualizarOrdemCompraVenda(Long codigo, OrdensDeCompra ordensDeCompra, String tokenId) {
+    @Transactional
+    @Override
+    public void deleteByCodigo(String codigo) {
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        ordensDeCompra.setPessoa(pessoaSalva);
-        ordensDeCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
+        repository.deleteByCodigoOrdemDeComppra(codigo);
+    }
 
-        OrdensDeCompra ordemSalva = buscaPorId(codigo);
-        BeanUtils.copyProperties(ordensDeCompra, ordemSalva, "ordemDeCompraId");
+    @Transactional
+    @Override
+    public OrdensDeCompra atualizarOrdemCompraVenda(String codigo, OrdemDeCompraInputUpdateRepresentation ordensDeCompra, String tokenId) {
 
-        return repository.save(ordemSalva);
+        try {
+            Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+            ordensDeCompra.setTipoOrdemManualAutoEnum(TipoOrdemManualAutoEnum.MANUAL);
+
+            var produtoSalvo = produtoRendaVariavelService.findByCodigoProdutoRVAndTokenId(
+                    ordensDeCompra.getProdutoRendaVariavel().getCodigoProdutoRV(),tokenId);
+
+            OrdensDeCompra ordemSalva = buscaPorCodidoOrdemDeCompraAndTokenId(codigo, tokenId);
+            BeanUtils.copyProperties(ordensDeCompra, ordemSalva, "ordemDeCompraId");
+
+            ordemSalva.setPessoa(pessoaSalva);
+            ordemSalva.setProdutoRendaVariavel(produtoSalvo);
+
+            return repository.save(ordemSalva);
+
+        } catch (OrdemDeCompraNaoEncontradaException e) {
+            throw new NegocioException(e.getMessage());
+        }
     }
 
     public Long pesquisaQtdAtivoComprado(String ticker, Long pessoaId) {
@@ -445,7 +506,7 @@ public class OrdemDeCompraRVService {
         return resultado;
     }
 
-    private BigDecimal calculaValorInvestido(OrdensDeCompra ordemCompra) {
+    private BigDecimal calculaValorInvestido(OrdemDeCompraInputReppresentation ordemCompra) {
 
         Long quantidadeCotas = ordemCompra.getQuantidadeCotas();
         BigDecimal valorUnitarioCota = ordemCompra.getPrecoUnitarioCota();
@@ -650,7 +711,4 @@ public class OrdemDeCompraRVService {
             return precoAtualCota;
         }
     }
-
-
-
 }

@@ -21,6 +21,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,6 +42,8 @@ public class SetoresServiceImpl implements SetoresService {
     @Autowired
     private SetoresMapper setoresMapper;
 
+    @Transactional
+    @Override
     public SetorResponseRepresentation cadastrarSetor(SetorInputRepresentation setorInput, HttpServletResponse response, String tokenId) {
 
         try {
@@ -58,6 +61,8 @@ public class SetoresServiceImpl implements SetoresService {
         }
     }
 
+    @Transactional
+    @Override
     public SetorResponseRepresentation atualizarSetor(String codigo, SetorInputUpdateRepresentation setor, String tokenId) {
 
         try {
@@ -71,6 +76,7 @@ public class SetoresServiceImpl implements SetoresService {
         }
     }
 
+    @Transactional
     @Override
     public void removerSetor(String codigo) {
 

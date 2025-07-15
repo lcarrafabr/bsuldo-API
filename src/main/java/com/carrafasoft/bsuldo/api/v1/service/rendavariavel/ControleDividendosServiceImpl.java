@@ -1,17 +1,25 @@
 package com.carrafasoft.bsuldo.api.v1.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.v1.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.v1.exception.NegocioException;
 import com.carrafasoft.bsuldo.api.v1.mapper.ControleDividendosRowMapper;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ControleDividendoInput;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ControleDividendosInputUpdate;
+import com.carrafasoft.bsuldo.api.v1.mapper.rendavariavel.ControleDividendosMapper;
 import com.carrafasoft.bsuldo.api.v1.model.AvisosAutomaticos;
 import com.carrafasoft.bsuldo.api.v1.model.Pessoas;
+import com.carrafasoft.bsuldo.api.v1.model.exceptionmodel.ControleDividendosNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ControleDividendos;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.OrdensDeCompra;
+import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ProdutosRendaVariavel;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.ControleDividendosCadastroCombobox;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.dto.GraficoDividendosRecebidosPorMesEAno;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.ControleDividendosRepository;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.OrdemDeCompraRepository;
 import com.carrafasoft.bsuldo.api.v1.service.AvisosAutomaticosService;
+import com.carrafasoft.bsuldo.api.v1.service.ControleDividendoService;
 import com.carrafasoft.bsuldo.api.v1.service.PessoaService;
+import com.carrafasoft.bsuldo.api.v1.service.ProdutoRendaVariavelService;
 import com.carrafasoft.bsuldo.api.v1.service.consultassql.ControleDividendosSQL;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.transform.Transformers;
@@ -22,6 +30,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
@@ -34,7 +43,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class ControleDividendosService {
+public class ControleDividendosServiceImpl implements ControleDividendoService {
 
     //private static final Logger logger = LoggerFactory.getLogger(ControleDividendos.class);
 
@@ -65,48 +74,87 @@ public class ControleDividendosService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public ControleDividendos cadastrarControleDividendo(ControleDividendos controleDividendos, HttpServletResponse response, String tokenId) {
+    @Autowired
+    private ProdutoRendaVariavelService produtoRendaVariavelService;
 
-        log.info("..: Iniciando o cadastro de dividendos :...");
+    @Autowired
+    private ControleDividendosMapper controleDividendosMapper;
 
-        String ticker = controleDividendos.getProdutosRendaVariavel().getTicker();
+    @Transactional
+    @Override
+    public ControleDividendos cadastrarControleDividendo(ControleDividendoInput controleDividendos, HttpServletResponse response, String tokenId) {
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        controleDividendos.setPessoa(pessoaSalva);
+        try {
+            log.info("..: Iniciando o cadastro de dividendos :...");
 
-        ControleDividendos controleDivSalvo = repository.save(controleDividendos);
-        publisher.publishEvent(new RecursoCriadoEvent(this, response, controleDivSalvo.getControleDividendoId()));
+            // String ticker = controleDividendos.getProdutosRendaVariavel().getTicker();
 
-        log.info("..: Cadastro realizado com sucesso: PessoaId: {}, ProdutoRVID: {} :...: ", pessoaSalva.getPessoaID(),
-                controleDivSalvo.getProdutosRendaVariavel().getProdutoId());
+            Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
 
-        return controleDivSalvo;
+            ProdutosRendaVariavel produtosRendaVariavelSalvo = produtoRendaVariavelService.findByCodigoProdutoRVAndTokenId(
+                    controleDividendos.getProdutosRendaVariavel().getCodigoProdutoRV(), tokenId
+            );
+
+            ControleDividendos controleDivToSave = controleDividendosMapper.toEntity(controleDividendos, pessoaSalva, produtosRendaVariavelSalvo);
+
+            ControleDividendos controleDivSalvo = repository.save(controleDivToSave);
+            publisher.publishEvent(new RecursoCriadoEvent(this, response, controleDivSalvo.getControleDividendoId()));
+
+            log.info("..: Cadastro realizado com sucesso: PessoaId: {}, ProdutoRVID: {} :...: ", pessoaSalva.getPessoaID(),
+                    controleDivSalvo.getProdutosRendaVariavel().getProdutoId());
+
+            return controleDivSalvo;
+
+        } catch (ControleDividendosNaoEncontradoException e) {
+            log.error("....: Erro ao cadastrar dividendo :....");
+            throw new NegocioException(e.getMessage());
+        }
     }
 
-    public ControleDividendos atualizarControleDividendos(Long codigo, ControleDividendos controleDividendos, String tokenId) {
+    @Transactional
+    @Override
+    public ControleDividendos atualizarControleDividendos(String codigo, ControleDividendosInputUpdate controleDividendos, String tokenId) {
 
-        log.info("..: Iniciando atualização de dividendos :...");
+        try {
+            log.info("..: Iniciando atualização de dividendos :...");
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        controleDividendos.setPessoa(pessoaSalva);
+            Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+            ControleDividendos controlDivSalvo = findByCodigoControleDivAndTokenId(codigo, tokenId);
 
-        ControleDividendos controlDivSalvo = buscaPorId(codigo);
-        BeanUtils.copyProperties(controleDividendos, controlDivSalvo, "controleDividendoId");
+            ProdutosRendaVariavel produtosRendaVariavelSalvo = produtoRendaVariavelService.findByCodigoProdutoRVAndTokenId(
+                    controleDividendos.getProdutosRendaVariavel().getCodigoProdutoRV(), tokenId
+            );
 
-        log.info("..: Atualização realizado com sucesso :...: " + controlDivSalvo.getProdutosRendaVariavel().getTicker());
+            BeanUtils.copyProperties(controleDividendos, controlDivSalvo, "controleDividendoId");
 
-        return repository.save(controlDivSalvo);
+            controlDivSalvo.setProdutosRendaVariavel(produtosRendaVariavelSalvo);
+            controlDivSalvo.setPessoa(pessoaSalva);
+
+            log.info("..: Atualização realizado com sucesso :...: " + controlDivSalvo.getProdutosRendaVariavel().getTicker());
+
+            return repository.save(controlDivSalvo);
+        } catch (ControleDividendosNaoEncontradoException e) {
+            throw new NegocioException(e.getMessage());
+        }
     }
 
-    public void atualizaAtatusDividendoAtivo(Long codigo, Boolean usado) {
+    @Transactional
+    @Override
+    public void removerControleDividendo(String codigo) {
+
+        repository.deleteByCodigoControleDividendo(codigo);
+    }
+
+    public void atualizaAtatusDividendoAtivo(String codigo, Boolean usado) {
 
         log.info("...: Atualizando status ativo dividendo :...");
-        ControleDividendos controleDivSalvo = buscaPorId(codigo);
+        ControleDividendos controleDivSalvo = buscaPorCodigoControleDividendo(codigo);
         controleDivSalvo.setDivUtilizado(usado);
         repository.save(controleDivSalvo);
         log.info("...: Status atualizado: " + controleDivSalvo.getProdutosRendaVariavel().getTicker() + " ID = " + codigo + " = " + usado + " :...");
     }
 
+    @Override
     public List<ControleDividendosCadastroCombobox> buscaControleDividendosCombobox(String tokenId) {
 
         Long pessoaId = pessoaService.recuperaIdPessoaByToken(tokenId);
@@ -120,7 +168,7 @@ public class ControleDividendosService {
 
             ControleDividendosCadastroCombobox controleBox = new ControleDividendosCadastroCombobox();
 
-            controleBox.setProdutoId(ordemCompraAgrupada.get(i).getProdutoRendaVariavel().getProdutoId());
+            controleBox.setCodigoProdutoRV(ordemCompraAgrupada.get(i).getProdutoRendaVariavel().getCodigoProdutoRV());
             controleBox.setTipoProdutoEnum(ordemCompraAgrupada.get(i).getTipoAtivoEnum().toString());
             controleBox.setTicker(ordemCompraAgrupada.get(i).getProdutoRendaVariavel().getTicker());
 
@@ -131,6 +179,17 @@ public class ControleDividendosService {
         }
 
 
+    @Override
+    public ControleDividendos findByCodigoControleDivAndTokenId(String codigoControleDividendo, String tokenId) {
+
+        return repository.findByCodigoControleDivAndTokenId(codigoControleDividendo,
+                pessoaService.recuperaIdPessoaByToken(tokenId)).orElseThrow(() -> new ControleDividendosNaoEncontradoException(codigoControleDividendo));
+    }
+
+    private ControleDividendos buscaPorCodigoControleDividendo(String codigo) {
+
+        return repository.buscaPorCodigoControleDividendo(codigo).orElseThrow(() -> new ControleDividendosNaoEncontradoException(codigo));
+    }
 
     private ControleDividendos buscaPorId(Long codigo) {
 
@@ -214,6 +273,7 @@ public class ControleDividendosService {
         return resultados;
     }
 
+    @Override
     public List<ControleDividendos> listarTodosOsDividendos(String tokenId, String ticker, String tipoRecebimento,
                                                             String dataReferencia, String dataPagamento) {
 
@@ -222,6 +282,7 @@ public class ControleDividendosService {
         List<ControleDividendos> retorno = new ArrayList<>();
         String sql = "SELECT " +
                 "c.controle_dividendos_id, " +
+                "c.codigo_controle_dividendo, " +
                 "c.tipo_ativo_enum, " +
                 "c.tipo_div_recebimento_enum, " +
                 "c.data_referencia, " +
@@ -235,6 +296,7 @@ public class ControleDividendosService {
                 "c.produto_id, " +
                 "p.nome_pessoa AS nome_pessoa, " +
                 "pr.produto_id, " +
+                "pr.codigo_produto_rv, " +
                 "pr.long_name, " +
                 "pr.short_name, " +
                 "pr.ticker, " +
@@ -247,7 +309,9 @@ public class ControleDividendosService {
                 "pr.descricao, " +
                 "pr.emissor_id, " +
                 "pr.segmento_id, " +
+                "s.codigo_segmento, " +
                 "pr.setor_id, " +
+                "se.codigo_setor, " +
                 "e.nome_emissor, " +
                // "e.status AS emissor_status, " +
                 "e.data_cadastro AS emissor_data_cadastro, " +
@@ -300,8 +364,6 @@ public class ControleDividendosService {
 
         return retorno;
     }
-
-
 
 
 }

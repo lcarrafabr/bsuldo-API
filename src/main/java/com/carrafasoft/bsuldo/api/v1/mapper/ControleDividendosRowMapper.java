@@ -20,6 +20,7 @@ public class ControleDividendosRowMapper implements RowMapper<ControleDividendos
         ControleDividendos controleDividendos = new ControleDividendos();
 
         controleDividendos.setControleDividendoId(rs.getLong("controle_dividendos_id"));
+        controleDividendos.setCodigoControleDividendo(rs.getString("codigo_controle_dividendo"));
         controleDividendos.setTipoAtivoEnum(TipoAtivoEnum.valueOf(rs.getString("tipo_ativo_enum")));
         controleDividendos.setTipoDivRecebimentoEnum(TipoDivRecebimentoEnum.valueOf(rs.getString("tipo_div_recebimento_enum")));
         controleDividendos.setDataReferencia(rs.getDate("data_referencia").toLocalDate());
@@ -40,6 +41,7 @@ public class ControleDividendosRowMapper implements RowMapper<ControleDividendos
         // Mapear campos de ProdutosRendaVariavel
         ProdutosRendaVariavel produto = new ProdutosRendaVariavel();
         produto.setProdutoId(rs.getLong("pr.produto_id")); // Certifique-se de que o alias está correto
+        produto.setCodigoProdutoRV(rs.getString("codigo_produto_rv"));
         produto.setLongName(rs.getString("pr.long_name"));
         produto.setShortName(rs.getString("pr.short_name"));
         produto.setTicker(rs.getString("pr.ticker"));
@@ -55,6 +57,7 @@ public class ControleDividendosRowMapper implements RowMapper<ControleDividendos
         // Mapear campos de Segmentos
         Segmentos segmento = new Segmentos();
         segmento.setSegmentoId(rs.getLong("segmento_id"));
+        segmento.setCodigoSegmento(rs.getString("codigo_segmento"));
         segmento.setNomeSegmento(rs.getString("nome_segmento"));
         //segmento.setStatus(rs.getBoolean("status"));
         produto.setSegmento(segmento);
@@ -62,6 +65,7 @@ public class ControleDividendosRowMapper implements RowMapper<ControleDividendos
         // Mapear campos de Setores
         Setores setor = new Setores();
         setor.setSetorId(rs.getLong("setor_id"));
+        setor.setCodigoSetor(rs.getString("codigo_setor"));
         setor.setNomeSetor(rs.getString("nome_setor"));
         //setor.setStatus(rs.getBoolean("status"));
         produto.setSetor(setor);

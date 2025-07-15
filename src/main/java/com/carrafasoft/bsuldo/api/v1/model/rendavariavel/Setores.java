@@ -42,7 +42,7 @@ public class Setores {
     public void aoCadastrar() {
         toUpperCase();
         setCodigoSetor(UUID.randomUUID().toString());
-        status = true;
+        setStatus(true);
     }
 
     @PreUpdate

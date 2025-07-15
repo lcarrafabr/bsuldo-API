@@ -3,24 +3,30 @@ package com.carrafasoft.bsuldo.api.v1.model.rendavariavel;
 import com.carrafasoft.bsuldo.api.v1.model.Emissores;
 import com.carrafasoft.bsuldo.api.v1.model.Pessoas;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
-@Getter
-@Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "produtos_renda_variavel")
 public class ProdutosRendaVariavel {
 
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "produto_id")
     private Long produtoId;
 
+    @Column(name = "codigo_produto_rv", length = 36, updatable = false)
+    private String codigoProdutoRV;
     @NotNull
     @Column(name = "long_name", length = 255)
     private String longName;
@@ -80,6 +86,7 @@ public class ProdutosRendaVariavel {
     @PrePersist
     public void aoCadastrar() {
         toUpperCase();
+        setCodigoProdutoRV(UUID.randomUUID().toString());
     }
 
     @PreUpdate

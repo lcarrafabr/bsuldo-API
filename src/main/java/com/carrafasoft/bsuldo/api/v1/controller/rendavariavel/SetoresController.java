@@ -44,17 +44,6 @@ public class SetoresController {
                 (nomeSetor == null || nomeSetor.trim().isEmpty()) ? null : nomeSetor.trim());
 
         return setoresMapper.toListSetorRepresentationMapper(setores);
-
-//        if(nomeSetor != null || !nomeSetor.trim().isEmpty()) {
-//
-//            return setoresMapper.toListSetorRepresentationMapper(
-//                    repository.findByPessoaIdAndNomeContainingIgnoreCase(pessoaService.recuperaIdPessoaByToken(tokenId), nomeSetor.trim())
-//            );
-//        }
-//
-//        return setoresMapper.toListSetorRepresentationMapper(
-//                repository.findAllByPessoaId(pessoaService.recuperaIdPessoaByToken(tokenId))
-//        );
     }
 
     @PostMapping

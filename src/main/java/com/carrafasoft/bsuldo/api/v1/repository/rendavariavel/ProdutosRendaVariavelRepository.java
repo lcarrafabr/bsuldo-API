@@ -2,8 +2,11 @@ package com.carrafasoft.bsuldo.api.v1.repository.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ProdutosRendaVariavel;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,8 +17,9 @@ public interface ProdutosRendaVariavelRepository extends JpaRepository<ProdutosR
 
     @Query(nativeQuery = true,
     value = "select * from produtos_renda_variavel " +
-            "where pessoa_id = :pessoaId ")
-    List<ProdutosRendaVariavel> findAllByPessoaId(Long pessoaId);
+            "where pessoa_id = :pessoaId " +
+            "order by produto_id desc ")
+    List<ProdutosRendaVariavel> findAllByPessoaId(@Param("pessoaId") Long pessoaId);
     @Query(nativeQuery = true,
             value = "select * from produtos_renda_variavel "
                     + "where ticker LIKE %:ticker% ")
@@ -26,4 +30,16 @@ public interface ProdutosRendaVariavelRepository extends JpaRepository<ProdutosR
             "where produto_id = :codigo  " +
             "and pessoa_id = :pessoaId ")
     Optional<ProdutosRendaVariavel> findByIdAndPessoaId(Long codigo, Long pessoaId);
+
+    @Query(nativeQuery = true,
+    value = "select * from produtos_renda_variavel " +
+            "where pessoa_id = :pessoaId " +
+            "and codigo_produto_rv = :codigoProdutoRV ")
+    Optional<ProdutosRendaVariavel> findByCodigoProdutoRVAndPessoaId(@Param("codigoProdutoRV") String codigoProdutoRV,
+                                                                     @Param("pessoaId") Long pessoaId);
+
+    @Query(nativeQuery = true,
+            value = "delete from produtos_renda_variavel " +
+                    "where codigo_produto_rv = :codigoProdutoRv ")
+    void deleteByCodigoProdutoRV(String codigoProdutoRv);
 }

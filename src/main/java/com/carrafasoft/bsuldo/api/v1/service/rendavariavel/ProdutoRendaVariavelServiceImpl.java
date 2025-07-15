@@ -2,21 +2,31 @@ package com.carrafasoft.bsuldo.api.v1.service.rendavariavel;
 
 import com.carrafasoft.bsuldo.api.v1.enums.AvaiableSectorsEnum;
 import com.carrafasoft.bsuldo.api.v1.event.RecursoCriadoEvent;
+import com.carrafasoft.bsuldo.api.v1.exception.NegocioException;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ProdutoRVResponseRepresentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ProdutoRvInputRepresentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.financeirodto.ProdutosRVInputUpdateRerpesentation;
+import com.carrafasoft.bsuldo.api.v1.mapper.rendavariavel.ProdutoRendaVariavelMapper;
 import com.carrafasoft.bsuldo.api.v1.model.Emissores;
 import com.carrafasoft.bsuldo.api.v1.model.Pessoas;
+import com.carrafasoft.bsuldo.api.v1.model.exceptionmodel.ProdutoRVNaoEncontradoException;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.ProdutosRendaVariavel;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.Segmentos;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.Setores;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.ProdutosRendaVariavelRepository;
+import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.SegmentosRepository;
 import com.carrafasoft.bsuldo.api.v1.repository.rendavariavel.SetoresRepository;
 import com.carrafasoft.bsuldo.api.v1.service.EmissoresService;
 import com.carrafasoft.bsuldo.api.v1.service.PessoaService;
+import com.carrafasoft.bsuldo.api.v1.service.ProdutoRendaVariavelService;
 import com.carrafasoft.bsuldo.braviapi.service.ConsultarProdutoSimples;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
@@ -24,7 +34,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class ProdutoRendaVariavelService {
+public class ProdutoRendaVariavelServiceImpl implements ProdutoRendaVariavelService {
 
     public static final String INFORMACAO_NA_DESCRICAO = "O cadastro automático não pode validar os seguintes campos abaixo:\n" +
             "* Gera Dividendos;\n" +
@@ -33,6 +43,8 @@ public class ProdutoRendaVariavelService {
             "Os campos com * influenciam nos relatórios. Favor confirmar e ajustar esses campos";
 
     public static final String SETOR_NAO_ENCONTRADO = "SETOR AUTOMÁTICO NÃO ENCONTRADO";
+
+    private static final String PRODUTO_EM_USO = "O produto de código %s não pode ser removido pois está em uso.";
 
     @Autowired
     private SetoresRepository setoresRepository;
@@ -55,12 +67,18 @@ public class ProdutoRendaVariavelService {
     @Autowired
     private PessoaService pessoaService;
 
+    @Autowired
+    private ProdutoRendaVariavelMapper produtoRendaVariavelMapper;
 
-    public ProdutosRendaVariavel cadastrarProdutoRV(ProdutosRendaVariavel produtosRendaVariavel, HttpServletResponse response,
-                                                    String tokenId) {
+    @Autowired
+    private SegmentosRepository segmentoRepository;
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        produtosRendaVariavel.setPessoa(pessoaSalva);
+    @Autowired
+    private SetoresRepository setorRepository;
+
+
+    @Transactional
+    public ProdutosRendaVariavel cadastrarProdutoRV(ProdutosRendaVariavel produtosRendaVariavel, HttpServletResponse response) {
 
         ProdutosRendaVariavel produtoRVSalvo = repository.save(produtosRendaVariavel);
         publisher.publishEvent(new RecursoCriadoEvent(this, response, produtoRVSalvo.getProdutoId()));
@@ -69,6 +87,35 @@ public class ProdutoRendaVariavelService {
     }
 
 
+    @Transactional
+    @Override
+    public ProdutosRendaVariavel preparaCadastroProdutoRVManual(ProdutoRvInputRepresentation produtosRendaVariavel, HttpServletResponse response,
+                                                    String tokenId) {
+
+        try {
+            Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
+
+            Segmentos segmentoSalvo = segmentosService.findByCodigoSegmentoAndTokenId(
+                    produtosRendaVariavel.getSegmento().getCodigoSegmento(), tokenId);
+
+            Setores setorSalvo = setorService.findByCodigoSetorAndTokenId(
+                    produtosRendaVariavel.getSetor().getCodigoSetor(), tokenId);
+
+            ProdutosRendaVariavel produtoRVToSave = produtoRendaVariavelMapper.toEntity(produtosRendaVariavel,
+                    pessoaSalva,
+                    segmentoSalvo,
+                    setorSalvo);
+
+            return cadastrarProdutoRV(produtoRVToSave, response);
+
+        } catch (ProdutoRVNaoEncontradoException e) {
+            throw new NegocioException(e.getMessage());
+        }
+    }
+
+
+    @Transactional
+    @Override
     public ProdutosRendaVariavel cadastrarAutomaticoRV(String ticker, String tokenApi, HttpServletResponse response, String tokenId) {
 
         ProdutosRendaVariavel produtoToSave = new ProdutosRendaVariavel();
@@ -128,19 +175,66 @@ public class ProdutoRendaVariavelService {
             produtoToSave.setEmissor(emissorPesquisa.get(0));
         }
 
-        return cadastrarProdutoRV(produtoToSave, response, tokenId);
+        return cadastrarProdutoRV(produtoToSave, response);
     }
 
-    public ProdutosRendaVariavel atualizarProdutoRV(Long codigo, ProdutosRendaVariavel produtosRendaVariavel, String tokenId) {
+    @Override
+    public ProdutosRendaVariavel findByCodigoProdutoRVAndTokenId(String codigoProdutoRV, String tokenId) {
 
-        Pessoas pessoaSalva = pessoaService.buscaPessoaPorId(pessoaService.recuperaIdPessoaByToken(tokenId));
-        produtosRendaVariavel.setPessoa(pessoaSalva);
-
-        ProdutosRendaVariavel produtoSalvo = buscaPorId(codigo);
-        BeanUtils.copyProperties(produtosRendaVariavel, produtoSalvo, "produtoId");
-
-        return repository.save(produtoSalvo);
+        return repository.findByCodigoProdutoRVAndPessoaId(codigoProdutoRV, pessoaService.recuperaIdPessoaByToken(tokenId))
+                .orElseThrow(() -> new ProdutoRVNaoEncontradoException(codigoProdutoRV));
     }
+
+    @Transactional
+    @Override
+    public ProdutoRVResponseRepresentation atualizarProdutoRV(String codigo,
+                                                              ProdutosRVInputUpdateRerpesentation produtosRVInputUpdateRerpesentation,
+                                                              String tokenId) {
+        try {
+            ProdutosRendaVariavel produtoRVSalvo = findByCodigoProdutoRVAndTokenId(codigo, tokenId);
+
+            // Copia os campos simples (sem sobrescrever o ID e o código gerado)
+            BeanUtils.copyProperties(produtosRVInputUpdateRerpesentation, produtoRVSalvo, "produtoId", "codigoProdutoRV", "segmento", "setor");
+
+            // Atualiza o SEGMENTO (buscando a entidade completa)
+            if (produtosRVInputUpdateRerpesentation.getSegmento() != null && produtosRVInputUpdateRerpesentation.getSegmento().getCodigoSegmento() != null) {
+                Segmentos segmento = segmentoRepository.findByCodigoSegmentoAndTokenId(produtosRVInputUpdateRerpesentation.getSegmento().getCodigoSegmento(),
+                                pessoaService.recuperaIdPessoaByToken(tokenId))
+                        .orElseThrow(() -> new NegocioException("Segmento não encontrado"));
+                produtoRVSalvo.setSegmento(segmento);
+            }
+
+            // Atualiza o SETOR (buscando a entidade completa)
+            if (produtosRVInputUpdateRerpesentation.getSetor() != null && produtosRVInputUpdateRerpesentation.getSetor().getCodigoSetor() != null) {
+                Setores setor = setorRepository.findByCodigoSetorAndPessoaId(produtosRVInputUpdateRerpesentation.getSetor().getCodigoSetor(),
+                                pessoaService.recuperaIdPessoaByToken(tokenId))
+                        .orElseThrow(() -> new NegocioException("Setor não encontrado"));
+                produtoRVSalvo.setSetor(setor);
+            }
+
+            // Salva a entidade e retorna o DTO de resposta
+            return produtoRendaVariavelMapper.toProdutoRVResponseRepresentation(
+                    repository.save(produtoRVSalvo)
+            );
+
+        } catch (ProdutoRVNaoEncontradoException e) {
+            throw new NegocioException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    @Override
+    public void removerProduto(String codigoProdutoRv) {
+
+        try {
+            repository.deleteByCodigoProdutoRV(codigoProdutoRv);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ProdutoRVNaoEncontradoException(codigoProdutoRv);
+        } catch (DataIntegrityViolationException e) {
+            throw new NegocioException(String.format(PRODUTO_EM_USO, codigoProdutoRv));
+        }
+    }
+
 
     private Setores salvarSetorAutomatico(String sector, HttpServletResponse response, Pessoas pessoaSalva) {
 

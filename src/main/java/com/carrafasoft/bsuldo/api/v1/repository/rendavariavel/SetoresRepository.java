@@ -17,13 +17,10 @@ public interface SetoresRepository extends JpaRepository<Setores, Long> {
             "where pessoa_id = :pessoaId " +
             "AND (:nomeSetor IS NULL OR LOWER(nome_setor) LIKE LOWER(CONCAT('%', :nomeSetor, '%'))) " +
             "order by setor_id desc ")
-    List<Setores> findAllByPessoaId(Long pessoaId, String nomeSetor);
+    List<Setores> findAllByPessoaId(@Param("pessoaId") Long pessoaId,
+                                    @Param("nomeSetor") String nomeSetor);
 
-    @Query(nativeQuery = true,
-    value = "select * from setores " +
-            "where setor_id = :codigo " +
-            "and pessoa_id = :pessoaId ")
-    Optional<Setores> findByIdAndPessoaId(Long codigo, Long pessoaId);
+
 
     @Query(nativeQuery = true,
             value = "select * from setores "

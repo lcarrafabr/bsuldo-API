@@ -5,24 +5,31 @@ import com.carrafasoft.bsuldo.api.v1.enums.TipoOrdemRendaVariavelEnum;
 import com.carrafasoft.bsuldo.api.v1.enums.TipoAtivoEnum;
 import com.carrafasoft.bsuldo.api.v1.model.Pessoas;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
-@Getter
-@Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "ordens_de_compra")
 public class OrdensDeCompra {
 
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ordem_de_compra_id")
     private Long ordemDeCompraId;
+
+    @Column(name = "codigo_ordem_de_compra", length = 36, updatable = false)
+    private String codigoOrdemDeComppra;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -73,14 +80,10 @@ public class OrdensDeCompra {
     @JoinColumn(name = "produto_id")
     private ProdutosRendaVariavel produtoRendaVariavel;
 
-    @Override
-    public int hashCode() {
-        return ordemDeCompraId.hashCode();
-    }
-
     @PrePersist
     public void aoCadastrar() {
         verificaSinalOperacao();
+        setCodigoOrdemDeComppra(UUID.randomUUID().toString());
     }
 
     @PreUpdate
@@ -90,18 +93,13 @@ public class OrdensDeCompra {
 
     private void verificaSinalOperacao() {
 
-        if(valorInvestido.compareTo(BigDecimal.ZERO) > 0 &&
-        tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.VENDA)) {
+        if (tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.VENDA)) {
+            valorInvestido = valorInvestido.abs().multiply(new BigDecimal("-1"));
+            quantidadeCotas = -Math.abs(quantidadeCotas);
 
-            valorInvestido = valorInvestido.multiply(new BigDecimal("-1"));
-            quantidadeCotas = quantidadeCotas;
-        }
-
-        if(valorInvestido.compareTo(BigDecimal.ZERO) < 0 &&
-        tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.COMPRA)) {
-
-            valorInvestido = valorInvestido.multiply(new BigDecimal("-1"));
-            quantidadeCotas = quantidadeCotas * -1;
+        } else if (tipoOrdemRendaVariavelEnum.equals(TipoOrdemRendaVariavelEnum.COMPRA)) {
+            valorInvestido = valorInvestido.abs();
+            quantidadeCotas = Math.abs(quantidadeCotas);
         }
     }
 }

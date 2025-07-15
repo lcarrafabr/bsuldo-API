@@ -3,6 +3,7 @@ package com.carrafasoft.bsuldo.api.v1.repository.rendavariavel;
 import com.carrafasoft.bsuldo.api.v1.model.rendavariavel.OrdensDeCompra;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -17,6 +18,13 @@ public interface OrdemDeCompraRepository extends JpaRepository<OrdensDeCompra, L
             "where ordem_de_compra_id = :codigo " +
             "and pessoa_id = :pessoaId ")
     Optional<OrdensDeCompra> findByIdAndPessoaId(Long codigo, Long pessoaId);
+
+    @Query(nativeQuery = true,
+            value = "select * from ordens_de_compra  " +
+                    "where codigo_ordem_de_compra = :codigo " +
+                    "and pessoa_id = :pessoaId ")
+    Optional<OrdensDeCompra> findByCodigoOrdemCompraAndPessoaId(@Param("codigo") String codigo,
+                                                                @Param("pessoaId") Long pessoaId);
 
     @Query(nativeQuery = true,
             value = "select " +
@@ -61,12 +69,15 @@ public interface OrdemDeCompraRepository extends JpaRepository<OrdensDeCompra, L
             "from ordens_de_compra " +
             "where pessoa_id = :pessoaId " +
             "group by produto_id ")
-    List<OrdensDeCompra> buscaListaDeComprasAgrupadasPorProduto(Long pessoaId);
+    List<OrdensDeCompra> buscaListaDeComprasAgrupadasPorProduto(@Param("pessoaId") Long pessoaId);
 
     @Query(nativeQuery = true,
     value = "select COALESCE(sum(valor_investido), 0) as valor from ordens_de_compra " +
             "where pessoa_id = :pessoaId ")
     BigDecimal valorTotalInvestidoRV(Long pessoaId);
 
-
+    @Query(nativeQuery = true,
+    value = "delete from ordens_de_compra " +
+            "where codigo_ordem_de_compra = :codigo ")
+    void deleteByCodigoOrdemDeComppra(@Param("codigo") String codigo);
 }

@@ -24,7 +24,7 @@ public class AcompanhamentoEstrategicoService {
     AcompanhamentoEstrategicoRepository repository;
 
     @Autowired
-    OrdemDeCompraRVService ordemCompraService;
+    OrdemDeCompraRVServiceImpl ordemCompraService;
 
     @Autowired
     private PessoaService pessoaService;
